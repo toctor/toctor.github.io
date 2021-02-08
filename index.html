@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- todo
+
+ergonomie message, choix, attente
+    puzzle 80%, modele 20%
+        https://www.freecodecamp.org/news/css-responsive-image-tutorial/
+
+    modele masquable
+    puzzle & modele zoomable
+    hint ? compteur hint
+
+    timer
+    
+choix image externe (galery, ...)
+
+menu, Ecran config
+param
+
+forme puzzle carton emboité
+bordure
+
+---2---
+modification css insert  element
+animation fin puzzle (fex artifice, cube 3d, ...)
+
+---3---
+voice command
+chatbot
+rconnaissance image ia
+
+https://jsfiddle.net/
+ -->
+    <title>
+        Drag-and-drop Sortable List Demo
+    </title>
+
+    <!-- (A) LOAD CSS + JS -->
+    <link rel="stylesheet" href="css/fusion.css" />
+    <script src="js/fusion.js"></script>
+</head>
+
+<body>
+    <!-- (B) THE LIST -->
+    <ul id="puzzle">
+    </ul>
+
+    <img id="modele" alt="Puzzle full image">
+
+    <div id="choix">
+        <input class="taille" type="radio" name="level" value="3">Facile
+        <input class="taille" type="radio" name="level" value="4">Normal
+        <input class="taille" type="radio" name="level" value="6">Difficile
+        <button id="changer">Changer d'image</button>
+    </div>
+
+    <div id="results">
+        <h4>Bravo!</h4>
+        <button id="recharger">Rejouer</button>
+    </div>
+
+</body>
+
+</html>

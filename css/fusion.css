@@ -1,0 +1,60 @@
+/* (X) DOES NOT MATTER */
+
+html,
+body {
+    font-family: arial, sans-serif;
+    background-color: black;
+}
+
+
+/* (A) LIST STYLES */
+
+#puzzle {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-wrap: wrap;
+    flex-wrap: wrap;
+    border: 2px red;
+    display: inline-block;
+    margin: 10px;
+    padding: 0;
+    /* height: 50vh; /* 50% of Viewport height */
+    /* width:  75vw; /* 75% of Viewport width */
+}
+
+#puzzle li {
+    display: inline-block;
+    float: left;
+    cursor: grab
+}
+
+
+/* (B) DRAG-AND-DROP HINT */
+
+#puzzle li.drag {
+    /* border: 1px solid #d4d4d4; */
+    background: repeating-linear-gradient( -45deg, #fff, #fff 4px, #d4d4d4 4px, #d4d4d4 5px);
+}
+
+#puzzle li.hint {
+    background: rgb(12, 236, 49);
+}
+
+#puzzle li.active {
+    /* cellule survolée */
+    background: #ffd4d4;
+}
+
+#modele {
+    width: 300px;
+    /* background-image: url("http://source.unsplash.com/random/150x150"); */
+}
+
+#results {
+    display: none;
+    background-color: rgb(206, 247, 27);
+}
+
+#choix {
+    background-color: rgb(206, 247, 27);
+}
