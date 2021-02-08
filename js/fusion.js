@@ -6,9 +6,7 @@ async function catalogueImage() {
     document.querySelectorAll(".taille").forEach(elem => elem.addEventListener("change", changerNiveau));
     document.querySelector("#changer").addEventListener("click", chargerImage);
     document.querySelector("#recharger").addEventListener("click", rechargerPage);
-    let img1 = "https://scontent-cdt1-1.xx.fbcdn.net/v/t1.15752-9/p1080x2048/131016034_479466119698687_6737939703229562416_n.jpg?_nc_cat=101&ccb=2&_nc_sid=ae9488&_nc_ohc=Iox-U6-NquYAX_HciST&_nc_ht=scontent-cdt1-1.xx&tp=6&oh=51fe809d723bbbef3a4cd658c3bf54c5&oe=603A2853";
-    let img2 = "http://macloo.com/images/inidisini/domba/IMG_4507.jpg";
-    images = [img1, img2, 'http://source.unsplash.com/random/150x150', 'http://source.unsplash.com/random/300x400'];
+    images = ['http://source.unsplash.com/random/150x150', 'http://source.unsplash.com/random/300x400'];
 
     chargerImage();
 }
