@@ -1,8 +1,25 @@
 var gridSize = 4,
+    styleSheet,
     images, imgWidth, imgHeight,
     imagePuzzle, modele, puzzle;
 
 async function catalogueImage() {
+
+    //style 
+    if (styleSheet !== 'undefined') {
+        styleSheet = document.createElement('style');
+        styleSheet.type = 'text/css';
+        document.head.appendChild(styleSheet);
+    }
+    // styleSheet.sheet.insertRule("#puzzle li {  background-color: yellow; }", styleSheet.length);
+    // - regrouper dans une seule définition #puzzle li
+
+
+    /*
+    #puzzle li {    display: inline-block;    float: left;    cursor: grab;  background-color: red;  }
+    */
+
+
     document.querySelectorAll(".taille").forEach(elem => elem.addEventListener("change", changerNiveau));
     document.querySelector("#changer").addEventListener("click", chargerImage);
     document.querySelector("#recharger").addEventListener("click", rechargerPage);
@@ -12,7 +29,7 @@ async function catalogueImage() {
 }
 
 async function chargerImage() {
-    imagePuzzle = images[(Math.floor((Math.random() * 3) + 0.5))]; // random image
+    imagePuzzle = images[(Math.floor((Math.random() * 2) + 0.5))]; // random image
 
     modele = document.querySelector("#modele");
     await _loadImage(imagePuzzle, modele);
@@ -88,6 +105,11 @@ function slice() {
             puzzle.appendChild(li);
         }
     }
+    //todo 
+    // - deleterule si existe deja
+    // - regrouper dans une seule définition #puzzle li
+    // styleSheet.sheet.insertRule('#puzzle li {  background-image: url(' + imagePuzzle + '); }', styleSheet.length);
+
 }
 
 function shuffle() {

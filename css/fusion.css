@@ -20,6 +20,8 @@ body {
     padding: 0;
     /* height: 50vh; /* 50% of Viewport height */
     /* width:  75vw; /* 75% of Viewport width */
+    border-width: 2px;
+    border-color: green;
 }
 
 #puzzle li {
