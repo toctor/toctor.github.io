@@ -1,0 +1,55 @@
+/* html, */
+
+body {
+    font-family: arial, sans-serif;
+    background-color: black;
+}
+
+#puzzle {
+    background: greenyellow;
+    border-color: yellow;
+    border: 2px solid red;
+    /* pad: 1px; */
+}
+
+.piece {
+    display: inline-block;
+    cursor: grab;
+}
+
+.gbordure {
+    filter: url("#pieceBorderFilter");
+}
+
+.piece svg image {
+    border: 1px solid red;
+}
+
+.drag svg image {
+    border: 1px solid #d4d4d4;
+    /* background: repeating-linear-gradient( -45deg, #fff, #fff 4px, #d4d4d4 4px, #d4d4d4 5px); */
+}
+
+.active svg image {
+    /* cellule survolée */
+    background: #ffd4d4;
+    opacity: 0.5;
+}
+
+#divmodele {
+    display: block;
+    margin: 50px;
+}
+
+#modele {
+    width: 300px;
+}
+
+#results {
+    display: none;
+    background-color: rgb(206, 247, 27);
+}
+
+#choix {
+    background-color: rgb(206, 247, 27);
+}

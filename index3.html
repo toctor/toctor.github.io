@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>
+        Drag-and-drop Sortable List Demo
+    </title>
+
+    <link rel="stylesheet" href="css/fusion3.css" />
+    <script src="js/fusion3.js"></script>
+</head>
+
+<body>
+    <div id="puzzle" class="puzzlegrid"></div>
+
+    <div>
+        <div id="divmodele">
+            <img id="modele" alt="Puzzle full image">
+        </div>
+        <div id="ghostbucket" style="margin: 10px;"></div>
+    </div>
+
+    <div id="choix">
+        <input class="taille" type="radio" name="level" value="3">Facile
+        <input class="taille" type="radio" name="level" value="4">Normal
+        <input class="taille" type="radio" name="level" value="6">Difficile
+        <button id="changer">Changer d'image</button>
+    </div>
+
+    <div id="results">
+        <h4>Bravo!</h4>
+        <button id="recharger">Rejouer</button>
+    </div>
+    <svg>
+        <filter id="pieceBorderFilter">
+            <feMorphology operator="dilate" in="SourceGraphic" radius="1"/>
+        </filter>
+    </svg>
+</body>
+
+</html>
