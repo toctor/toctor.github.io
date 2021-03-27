@@ -21,7 +21,7 @@ function catalogueImage() {
     document.querySelectorAll(".taille").forEach(elem => elem.addEventListener("change", changerNiveau));
     document.querySelector("#changer").addEventListener("click", chargerImage);
     document.querySelector("#recharger").addEventListener("click", rechargerPage);
-    images = ['https://unsplash.it/600/600?image=1074']; //,'http://source.unsplash.com/random/300x400'];
+    images = ['https://unsplash.it/600/600?image=598'] // ['https://unsplash.it/600/600?image=1074']; //,'http://source.unsplash.com/random/300x400'];
 
     chargerImage();
 }
@@ -67,7 +67,7 @@ function chargerPuzzle() {
 function slice() {
     var puzzleHeight, puzzleWidth // @todo : ajust with screen size
     if (imgWidth > imgHeight) {
-        puzzleHeight = 400;
+        puzzleHeight = 300;
         puzzleWidth = Math.floor(puzzleHeight * imgWidth / imgHeight)
     } else {
         puzzleWidth = 300;
@@ -79,20 +79,22 @@ function slice() {
         document.querySelector("#svgforpath").remove()
     }
 
-    pWidth = puzzleWidth / gridSize;
-    pHeight = puzzleHeight / gridSize;
+    // pWidth = Math.floor((puzzleWidth * 10) / (gridSize * 14));
+    // pHeight = Math.floor((puzzleHeight * 10) / (gridSize * 14));
+    pWidth = Math.floor(puzzleWidth / gridSize);
+    pHeight = Math.floor(puzzleHeight / gridSize);
     let xMax = gridSize;
     let yMax = gridSize;
 
     puzzle.style.width = (xMax * pWidth) + 'px';
     puzzle.style.height = (yMax * pHeight) + 'px';
 
-    let backgroundSize = (100 * Math.max(xMax, yMax))
-    let handWidth = 0 //Math.floor(pWidth * 15 / 100); // horizontal piece hand width
+    // let backgroundSize = (100 * Math.max(xMax, yMax))
+    // let handWidth = 0 //Math.floor(pWidth * 15 / 100); // horizontal piece hand width
 
-    let xStart = 0
-    let yStart = 0
-        //style dynamique
+    // let xStart = 0
+    // let yStart = 0
+    //style dynamique
     for (let i = 0; i < document.styleSheets[0].cssRules.length; i++) {
         if (document.styleSheets[0].cssRules[i].selectorText == ".piece") {
             document.styleSheets[0].deleteRule(i);
@@ -147,6 +149,9 @@ function shuffle() {
 function createsvgpath(x, y, xMax, yMax) {
     //    function createsvgpath(largeur, hauteur, haut, droite, bas, gauche) {
 
+    pWidth10 = Math.floor(pWidth / 10)
+    pHeight10 = Math.floor(pHeight / 10)
+
     // random sides (1 : outside, 0 : flat, -1 : inside)
     let top = (y == 0 ? 0 : (xyshape[x][y - 1].bottom)),
         right = (x == xMax - 1 ? 0 : (Math.random() < 0.5 ? 1 : -1)),
@@ -167,20 +172,22 @@ function createsvgpath(x, y, xMax, yMax) {
 
     let shapeid = "path_" + x + "_" + y; //@todo test si shape existe déjà
 
-    let position = x * pWidth + " " + y * pHeight + " ";
+    let position = (x * pWidth + pWidth10 * 3 * Math.abs(left)) + " " + (y * pHeight + pHeight10 * 3 * Math.abs(top));
 
-    let shapepath = "M " + position + beziercurve(top, right, bottom, left);
+    let shapepath = "M " + position + " " + beziercurve(top, right, bottom, left);
 
 
     let newSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    newSvg.setAttribute("width", pWidth + "px");
-    newSvg.setAttribute("height", pHeight + "px");
-    newSvg.setAttribute("viewBox", position + (pWidth + Math.round(pWidth * 3 * 2 / 10)) + " " + (pHeight + Math.round(pHeight * 3 * 2 / 10)));
+    newSvg.setAttribute("width", pWidth + pWidth10 * 4 + "px");
+    newSvg.setAttribute("height", pHeight + pHeight10 * 4 + "px");
+    newSvg.setAttribute("id", "svg" + (y * yMax + x));
+    newSvg.setAttribute("viewBox", position + " " + (pWidth + pWidth10 * 2 * (Math.abs(left) + Math.abs(right)) + " " +
+        (pHeight + pHeight10 * 2 * (Math.abs(top) + Math.abs(bottom)))));
     // piece.style.backgroundPosition = (-(x * pWidth) - xStart + (x * handWidth)) + 'px ' + (-y * pHeight - yStart) + 'px';    
     let newClipPath = document.createElementNS("http://www.w3.org/2000/svg", "clipPath");
     newClipPath.setAttribute("id", shapeid);
-    newClipPath.setAttribute("transform", "translate(" + Math.abs(Math.round(pWidth * 3 * left / 10)) + ", " + Math.abs(Math.round(pHeight * 3 * top / 10)) + ")");
-    // @todo translate bosse:3/10, creux or plat:0  jamais négatif 
+    // newClipPath.setAttribute("transform", "translate(" + Math.abs(Math.round(pWidth * 3 * left / 10)) + ", " + Math.abs(Math.round(pHeight * 3 * top / 10)) + ")");
+
     let newPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
     newPath.setAttribute("d", shapepath);
     newClipPath.appendChild(newPath);
@@ -220,8 +227,6 @@ function createsvgpath(x, y, xMax, yMax) {
 }
 
 function beziercurve(top, right, bottom, left) { // 1 côte creux/bosse suivi de 3 côtés plat
-    pWidth10 = Math.floor(pWidth / 10)
-    pHeight10 = Math.floor(pHeight / 10)
     let pWidthajust = pWidth % 10
     let pHeightajust = pHeight % 10
 
@@ -241,9 +246,18 @@ function poignee(c, r, adjust) {
     // creux top :   M0,0  c 2,0 6,-2 4,1      c -1,2 3,2 2,0       c -2,-3 2,-1 4,-1 ===> y négatifs si creux
     // creux droite  : M10,0  c 0,2 2,6 -1,4      c -2,-1 -2,3 0,2       c 3,-2 1,2 1,4    ===> inverser x,y
     // c 2,0 6,2 4,-1      c -1,-2  3,-2 2,0       c -2,3 2,1 4,1
-    return "c " + trsl(2, 0, c, r) + trsl(6, 2, c, r) + trsl(4, -1, c, r) +
-        "c " + trsl(-1, -2, c, r) + trsl(3, -2, c, r, adjust) + trsl(2, 0, c, r, adjust) +
-        "c " + trsl(-2, 3, c, r) + trsl(2, 1, c, r) + trsl(4, 1, c, r);
+    // return "c " + trsl(2, 0, c, r) + trsl(6, 2, c, r) + trsl(4, -1, c, r) +
+    //     "c " + trsl(-1, -2, c, r) + trsl(3, -2, c, r, adjust) + trsl(2, 0, c, r, adjust) +
+    //     "c " + trsl(-2, 3, c, r) + trsl(2, 1, c, r) + trsl(4, 1, c, r);
+
+    // creux top M0,0 h3 s2,0 1,1   s0,1 1,1  s2,0 1,-1  s1,-1 1,-1 h3
+    return " l" + trsl(3, 0, c, r) +
+        " s" + trsl(2, 0, c, r) + trsl(1, 1, c, r) +
+        " s" + trsl(0, 1, c, r) + trsl(1, 1, c, r) +
+        " l" + trsl(0, 0, c, r, adjust) +
+        " s " + trsl(2, 0, c, r) + trsl(1, -1, c, r) +
+        " s " + trsl(1, -1, c, r) + trsl(1, -1, c, r) +
+        " l" + trsl(3, 0, c, r);
 }
 
 function trsl(x, y, c, r, adjust = 0) {
@@ -257,34 +271,6 @@ function trsl(x, y, c, r, adjust = 0) {
         X = pWidth10 * c * y;
     }
     return (r == 180 ? -X : X) + "," + (r == 270 ? -Y : Y) + " "; // x négatif si 180°, y négatif si 270°
-}
-
-function poigneeOLD(c, r) {
-    return "C " + trsl(1 / 4, 0, r) + trsl(1 / 2, -c / 10, r) + trsl(4 / 10, c / 10, r) +
-        "C " + trsl(1 / 4, 3 * c / 10, r) + trsl(1 / 4, 3 * c / 10, r, true) + trsl(4 / 10, c / 10, r, true) +
-        "C " + trsl(1 / 2, -c / 10, r, true) + trsl(1 / 4, 0, r, true) + trsl(1, 0, r);
-}
-
-function trslOLD(x, y, r, reverse = false) {
-    let X, Y;
-    if (r == 0 || r == 180) {
-        X = Math.round(pWidth * x);
-        Y = Math.round(pHeight * y);
-        if (r == 0) {
-            return (reverse ? pWidth - X : X) + "," + Y + " ";
-        } else if (r == 180) { // rotation 180° 
-            let calcul = (reverse ? X : (pWidth - X)) + "," + (pHeight - Y) + " ";
-            return calcul;
-        }
-    } else {
-        Y = Math.round(pHeight * x);
-        X = Math.round(pWidth * y);
-        if (r == 90) { // rotation 90° 
-            return pWidth - X + "," + (reverse ? pHeight - Y : Y) + " ";
-        } else if (r == 270) { // rotation -90° 
-            return X + "," + (reverse ? Y : pHeight - Y) + " ";
-        }
-    }
 }
 
 function grabbable() {
@@ -318,8 +304,14 @@ function grabbable() {
             // ghost.style.clipPath = "polygon(15% 0, 100% 0%, 100% 40%, 85% 35%, 85% 65%, 100% 60%, 100% 100%, 15% 100%, 15% 60%, 0 65%, 0% 35%, 15% 40%)";
             // ghost.style.transform = ev.target.style.transform;
 
+            while (document.querySelector("#ghostbucket").firstChild) {
+                document.querySelector("#ghostbucket").removeChild(document.querySelector("#ghostbucket").firstChild);
+            }
 
-            //ev.dataTransfer.setDragImage(current, 0, 0);
+            var ghost = document.querySelector("#svg" + current.getAttribute("position")).cloneNode(true);
+            document.querySelector("#ghostbucket").appendChild(ghost);
+
+            ev.dataTransfer.setDragImage(ghost, 0, 0); /* set custom Ghost */
 
         });
 

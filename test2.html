@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>
+    </title>
+    <style>
+        .puzzle {
+            flex-wrap: wrap;
+            display: inline-block;
+            border: 10px solid rgb(138, 165, 42);
+            position: absolute;
+            margin: 10px;
+            width: 200px;
+            height: 100px;
+            top: 0;
+            left: 0;
+            /* transform-style: preserve-3d; */
+        }
+        /* .puzzle:nth-child(1) {
+            transform: translateX(-100%) translateY(-100%) rotate(0deg);
+            transform: translate(-25%);
+        } */
+        
+        #pshape {
+            transform: scale(1 1)
+        }
+        
+        .piece {
+            /* position: absolute;
+            transform-style: preserve-3d; */
+            float: left;
+            /* position: absolute; */
+            background-color: blueviolet;
+            background-image: url(https://images.unsplash.com/photo-1612644576598-e8ff10f06963?ixid=MXwxMjA3fDB8MHx0b3BpYy1mZWVkfDU0fDZzTVZqVExTa2VRfHxlbnwwfHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60);
+            width: 100px;
+            height: 100px;
+            /* clip-path: url(#pshape); */
+            /* clip-path: path('M 0 200 L 0 75 A 5 5 0 0 1 150 75 L 200 200 z'); */
+            /* clip-path: polygon(100% 0%, 75% 50%, 100% 100%, 25% 100%, 0% 50%, 25% 0%); */
+            /* clip-path: polygon(100px 0px, 75px 50px, 100px 100px, 25px 100px, 0px 50px, 25px 0px); */
+            /* clip-path: path('M0.5,1 C0.5,1,0,0.7,0,0.3 A0.25,0.25,1,1,1,0.5,0.3 A0.25,0.25,1,1,1,1,0.3 C1,0.7,0.5,1,0.5,1 Z'); */
+            /* clip-path: polygon(15% 0, 100% 0%, 100% 40%, 85% 45%, 85% 55%, 100% 60%, 100% 100%, 15% 100%, 15% 55%, 0 60%, 0 40%, 15% 45%); */
+            /* OK */
+            clip-path: polygon(15% 0, 100% 0%, 100% 40%, 85% 35%, 85% 65%, 100% 60%, 100% 100%, 15% 100%, 15% 60%, 0 65%, 0% 35%, 15% 40%);
+            /* clip-path: path('M 213, 6.7  c -32.4 -14.4 -73.7, 0 -88.1, 30.6  C110.6,4.9,67.5-9.5,36.9,6.7 C2.8,22.9-13.4,62.4,13.5,110.9 C33.3,145.1,67.5,170.3,125,217c59.3-46.7,93.5-71.9,111.5-106.1C263.4,64.2,247.2,22.9,213.1,6.7z'); */
+        }
+    </style>
+
+</head>
+
+<body>
+    <svg viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+    <clipPath id="pshape" clipPathUnits="objectBoundingBox" transform="scale(0.003 0.003)">
+        <path d="M 200 100 C 220 100.87 250.45 91.17 239.61 111.17 C 228.76 131.17 268.76 131.17 259.61 111.17 C 250.45 91.17 280 99.31 300 100 C 298.63 120 291.31 151.41 311.31 140.13 C 331.31 128.85 331.31 168.85 311.31 160.13 C 291.31 151.41 298.78 180 300 200 C 280 199.71 249.72 208.21 258.02 188.21 C 266.31 168.21 226.31 168.21 238.02 188.21 C 249.72 208.21 220 198.02 200 200 C 199.19 180 188.5 147.99 208.5 159.15 C 228.5 170.31 228.5 130.31 208.5 139.15 C 188.5 147.99 201.77 120 200 100 Z"/>
+    </clipPath>
+    <clipPath id="cloud02" clipPathUnits="objectBoundingBox" transform="scale(0.002 0.002)">
+        <path d="M 200 100 C 220 100.87 250.45 91.17 239.61 111.17 C 228.76 131.17 268.76 131.17 259.61 111.17 C 250.45 91.17 280 99.31 300 100 C 298.63 120 291.31 151.41 311.31 140.13 C 331.31 128.85 331.31 168.85 311.31 160.13 C 291.31 151.41 298.78 180 300 200 C 280 199.71 249.72 208.21 258.02 188.21 C 266.31 168.21 226.31 168.21 238.02 188.21 C 249.72 208.21 220 198.02 200 200 C 199.19 180 188.5 147.99 208.5 159.15 C 228.5 170.31 228.5 130.31 208.5 139.15 C 188.5 147.99 201.77 120 200 100 Z"/>
+    </clipPath>            
+    </defs>
+    </svg>
+
+    <div class="puzzle">
+        <div id="p1" class="piece"></div>
+        <div id="p2" class="piece" style="transform: translate(-25%);background-position: -75px 0;"></div>
+    </div>
+</body>
+
+</html>

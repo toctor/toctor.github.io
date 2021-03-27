@@ -1,6 +1,8 @@
 /* (X) DOES NOT MATTER */
 
-html,
+
+/* html, */
+
 body {
     font-family: arial, sans-serif;
     background-color: black;
@@ -14,6 +16,14 @@ body {
 
 
 /* width:  75vw; /* 75% of Viewport width */
+
+#puzzle {
+    display: grid;
+    grid-template-columns: repeat(4, 90px);
+    grid-template-rows: repeat(4, 90px);
+    background: greenyellow;
+    /* pad: 1px; */
+}
 
 
 /* #puzzle {
@@ -29,12 +39,52 @@ body {
     border-color: green;
 } */
 
+#ghostbucket {
+    /* transform: translate(-50px, -50px); */
+}
+
+
+/* le ghost s'affiche sans clip-path si div non visible*/
+
+
+/* #divmodele {    
+    position: relative;
+    top: -100px;
+    z-index: 2;
+} */
+
+
+/* #puzzle div {
+    grid-column: span 1;
+    grid-row: span 1;
+} */
+
 .piece {
     display: inline-block;
     cursor: grab;
 }
 
-.Xpiece:before {
+
+/* (B) DRAG-AND-DROP HINT */
+
+.drag svg image {
+    border: 1px solid #d4d4d4;
+    background: repeating-linear-gradient( -45deg, #fff, #fff 4px, #d4d4d4 4px, #d4d4d4 5px);
+}
+
+
+/* .hint {
+    background: rgb(12, 236, 49);
+} */
+
+.active svg image {
+    /* cellule survolée */
+    background: #ffd4d4;
+    opacity: 0.5;
+}
+
+
+/* .Xpiece:before {
     content: "";
     position: absolute;
     width: 100px;
@@ -44,24 +94,7 @@ body {
     background-size: 400%;
     transform: translate(11px);
     clip-path: polygon(15% 0, 100% 0%, 100% 40%, 85% 35%, 85% 65%, 100% 60%, 100% 100%, 15% 100%, 15% 60%, 0 65%, 0% 35%, 15% 40%);
-}
-
-
-/* (B) DRAG-AND-DROP HINT */
-
-#puzzle div.drag {
-    /* border: 1px solid #d4d4d4; */
-    /* background: repeating-linear-gradient( -45deg, #fff, #fff 4px, #d4d4d4 4px, #d4d4d4 5px); */
-}
-
-#puzzle div.hint {
-    /* background: rgb(12, 236, 49); */
-}
-
-#puzzle div.active {
-    /* cellule survolée */
-    background: #ffd4d4;
-}
+} */
 
 #modele {
     width: 300px;

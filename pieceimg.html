@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- todo
+
+  - deplacement drag and drop 
+        - piece svg forme puzzle
+        - svg dynamique
+        
+
+
+
+ergonomie message, choix, attente
+    puzzle 80%, modele 20%
+        https://www.freecodecamp.org/news/css-responsive-image-tutorial/
+
+    modele masquable
+    puzzle & modele zoomable
+    hint ? compteur hint
+
+    timer
+    
+choix image externe (galery, ...)
+
+menu, Ecran config
+param
+
+forme puzzle carton emboité
+bordure
+
+---2---
+modification css insert  element
+animation fin puzzle (fex artifice, cube 3d, ...)
+
+---3---
+voice command
+chatbot
+rconnaissance image ia
+
+https://jsfiddle.net/
+ -->
+    <title>
+        Drag-and-drop Sortable List Demo
+    </title>
+
+
+    <!-- <link rel="stylesheet" href="css/fusion.css" />
+    <script src="js/fusion.js"></script> -->
+    <style>
+        .piece {
+            display: inline-block;
+            float: left;
+            cursor: grab;
+            /* clip-path: polygon(15% 0, 100% 0%, 100% 40%, 85% 35%, 85% 65%, 100% 60%, 100% 100%, 15% 100%, 15% 60%, 0 65%, 0% 35%, 15% 40%); */
+            background-color: blue;
+            width: 200px;
+            height: auto;
+        }
+    </style>
+</head>
+
+<body>
+
+    <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <clipPath id="rond"><circle cx="50" cy="50" r="50" fill="red"/></clipPath>            
+            <clipPath id="shape1" clipPathUnits="objectBoundingBox">
+                <path d="M 0 -100 L 100 -100 C 98.19 -80 109.06 -50.09 89.06 -58.34 C 69.06 -66.58 69.06 -26.58 89.06 -38.34 C 109.06 -50.09 98.23 -20 100 0 C 80 -0.870000000000005 49.08 -10.33 59.11 9.67 C 69.13 29.67 29.13 29.67 39.11 9.67 C 49.08 -10.33 20 0.219999999999999 0 0 C 0.209999999999994 -20 -8.75 -49.27 11.25 -38.62 C 31.25 -27.96 31.25 -67.96 11.25 -58.62 C -8.75 -49.27 -0.510000000000005 -80 0 -100 Z"></path>
+            </clipPath>
+    </defs>
+    </svg>
+
+    <div class="puzzle">
+        <div id="p1" class="piece" draggable="true" ondragstart="drag(event)">
+
+        </div>
+        <div id="p2" class="piece" draggable="true" ondragstart="drag(event)" style="transform: translate(-25%);background-position: -75px 0;">
+            <svg id="svg1" viewBox="0 0 100 100">
+                <image width="100" height="100" 
+                xlink:href="https://unsplash.it/300/300?image=1074" clip-path="url(#rond)" />
+            </svg> </div>
+    </div>
+
+    <div id=" droparea " ondrop="drop(event) " ondragover="allowDrop(event) ">
+        drop area
+    </div>
+
+    <!-- <svg id="svg100" viewBox="0 0 100 100">
+        <defs>
+            <clipPath id="rond2"><circle cx="50" cy="50" r="50" fill="red"/></clipPath>            
+        </defs>        <image width="100" height="100" xlink:href="https://unsplash.it/300/300?image=1074" clip-path="url(#rond)" />
+    </svg> -->
+
+    <script>
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text ", ev.target.id);
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            var data = ev.dataTransfer.getData("text ");
+            ev.target.appendChild(document.getElementById(data));
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            // let newSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            // newSvg.setAttribute("width", "500");
+            // newSvg.setAttribute("height", "350");
+
+            // let newDefs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+
+            // let newClipPath = document.createElementNS("http://www.w3.org/2000/svg", "clipPath");
+            // newClipPath.setAttribute("id", "myCircle007");
+
+            // let newCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            // newCircle.setAttribute("cx", "150");
+            // newCircle.setAttribute("cy", "150");
+            // newCircle.setAttribute("r", "150");
+
+            // newClipPath.appendChild(newCircle);
+            // newDefs.appendChild(newClipPath);
+            // newSvg.appendChild(newDefs);
+
+            // let newImage = document.createElementNS("http://www.w3.org/2000/svg", "image");
+            // newImage.setAttribute("width", "300");
+            // newImage.setAttribute("height", "300");
+            // newImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', 'https://unsplash.it/300/300?image=1074');
+            // newImage.setAttribute("clip-path", "url(#myCircle)");
+
+            // newSvg.appendChild(newImage);
+            // document.getElementById("dynamicSvgDiv").appendChild(newSvg);
+        });
+    </script>
+</body>
+
+</html>
