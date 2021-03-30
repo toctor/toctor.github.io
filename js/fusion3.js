@@ -1,7 +1,5 @@
 /* @todo
 
-    choix image externe (galery, ...)
-
     tapis où déposer une pièce 
 
     modele masquable
