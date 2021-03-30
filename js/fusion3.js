@@ -1,9 +1,31 @@
 /* @todo
-erreur : 1ere piece position 0 : viewbox width 103 au lieu de 89 (+2/10)
-erreur : 2eme piece position 1 : viewbox x 82 au lieu de 96 (-2/10)
+
+    choix image externe (galery, ...)
+
+    tapis où déposer une pièce 
+
+    modele masquable
+    hint : passer par dessus modele pou visualiser  emplacement cible 
+
+    animation fin puzzle (fex artifice, cube 3d, ...)
+
+
+    
+    compteur hint
+    puzzle & modele zoomable
+    timer
+    
+
+menu, 
+Ecran config
+
+---3---
+voice command
+chatbot
+rconnaissance image ia
 
 */
-var imagedebug = 'https://unsplash.it/600/600?image=598'
+var imagedebug = 'https://unsplash.it/600/600?image=598' // 1074 : lion
 
 var gridSize = 4,
     images, imgWidth, imgHeight,
@@ -11,29 +33,23 @@ var gridSize = 4,
     puzzleHeight = 300,
     puzzleWidth = 300, // @todo : ajust with screen size
     pWidth, pHeight,
-    pWidth10, pHeight10;
+    pWidth10, pHeight10,
+    zIndex = 0;
 
 
-function catalogueImage() {
+async function chargerImage() {
     document.querySelectorAll(".taille").forEach(elem => elem.addEventListener("change", changerNiveau));
     document.querySelector("#changer").addEventListener("click", chargerImage);
     document.querySelector("#recharger").addEventListener("click", rechargerPage);
-    images = [imagedebug] // ['https://unsplash.it/600/600?image=1074']; //,'http://source.unsplash.com/random/300x400'];
-
-    chargerImage();
-}
-
-async function chargerImage() {
-    let i = (Math.floor((Math.random() * (images.length - 1)) + 0.5));
-    console.log(i);
+    images = ['http://source.unsplash.com/random'];
+    //let i = (Math.floor((Math.random() * (images.length - 1)) + 0.5));
+    let i = 0;
     imagePuzzle = images[i]; // random image
 
     modele = document.querySelector("#modele");
     await _loadImage(imagePuzzle, modele);
-    imgWidth = modele.naturalWidth;
-    imgHeight = modele.naturalHeight;
 
-    chargerPuzzle();
+    await chargerPuzzle();
 }
 
 async function _loadImage(url, elem) {
@@ -44,7 +60,12 @@ async function _loadImage(url, elem) {
     });
 }
 
-function chargerPuzzle() {
+async function chargerPuzzle() {
+    await document.querySelector('#imgmodele').setAttributeNS('http://www.w3.org/1999/xlink', 'href', modele.src);
+    imagePuzzle = "#imgmodele"
+
+    imgWidth = modele.naturalWidth;
+    imgHeight = modele.naturalHeight;
     //vidage pour rejeu
     puzzle = document.querySelector("#puzzle");
     while (puzzle.firstChild) {
@@ -71,13 +92,16 @@ function slice() {
 
     pWidth = Math.floor(puzzleWidth / gridSize);
     pHeight = Math.floor(puzzleHeight / gridSize);
+    pWidth10 = Math.floor(pWidth / 10)
+    pHeight10 = Math.floor(pHeight / 10)
+
     let xMax = gridSize;
     let yMax = gridSize;
 
     puzzleWidth = xMax * pWidth
     puzzleHeight = yMax * pHeight
-    puzzle.style.width = puzzleWidth + 'px';
-    puzzle.style.height = puzzleHeight + 'px';
+    puzzle.style.width = (puzzleWidth + pWidth10 * 4) + 'px';
+    puzzle.style.height = (puzzleHeight + pHeight10 * 4) + 'px';
 
     //style dynamique
     for (let i = 0; i < document.styleSheets[0].cssRules.length; i++) {
@@ -86,6 +110,9 @@ function slice() {
         }
     }
     document.styleSheets[0].insertRule(".puzzlegrid {display: grid; grid-template-columns: repeat(" + xMax + ", " + pWidth + "px);  grid-template-rows: repeat(" + yMax + ", " + pHeight + "px);}");
+
+    document.querySelector('#imgmodele').setAttribute("width", puzzleWidth + "px");
+    document.querySelector('#imgmodele').setAttribute("height", puzzleHeight + "px");
 
     xyshape.length = 0 // Clear array
 
@@ -114,9 +141,6 @@ function shuffle() {
 }
 
 function createsvgpath(x, y, xMax, yMax) {
-    pWidth10 = Math.floor(pWidth / 10)
-    pHeight10 = Math.floor(pHeight / 10)
-
     let top = (y == 0 ? 0 : (xyshape[x][y - 1].bottom)),
         right = (x == xMax - 1 ? 0 : (Math.random() < 0.5 ? 1 : -1)),
         bottom = (y == yMax - 1 ? 0 : (Math.random() < 0.5 ? 1 : -1)),
@@ -133,15 +157,7 @@ function createsvgpath(x, y, xMax, yMax) {
     };
 
     let shapeid = "path_" + x + "_" + y; //@todo test si shape existe déjà
-    /*
-    <svg width="103px" height="103px" id="svg0" viewBox="0 0 103 103">
-        <clipPath id="path_0_0"><path d="M 1 1 h 75 l 0,21  s 0,14 -7,7  s -7,0 -7,7  l 0,5  s 0,14 7,7  s 7,7 7,7  l 0,21  l -21,0  s -14,0 -7,7  s 0,7 -7,7  l -5,0  s -14,0 -7,-7  s -7,-7 -7,-7  l -21,0 Z"></path></clipPath>
-        <filter id="pieceBorderFilter"><feMorphology operator="dilate" in="SourceGraphic" radius="1" /></filter>
-        <g class="bordure"><rect x=-0 y=0 clip-path="url(#path_0_0)" height="103px" width="103px" fill="white"></rect></g>
-        <image width="600px" height="600px" clip-path="url(#path_0_0)" xlink:href="https://unsplash.it/600/600?image=598"></image>
-    </svg>    
-    */
-    // let newfeMorphology = document.createElementNS("http://www.w3.org/2000/svg", "feMorphology"); // todo : une seule fois
+    // let newfeMorphology = document.createElementNS("http://www.w3.org/2000/svg", "feMorphology"); // todo : une seule fois en dynamique
     // newfeMorphology.setAttribute("operator", "dilate");
     // newfeMorphology.setAttribute("in", "SourceGraphic");
     // newfeMorphology.setAttribute("radius", "1");
@@ -158,9 +174,10 @@ function createsvgpath(x, y, xMax, yMax) {
     newG.setAttribute("class", "gbordure");
     newG.appendChild(newRect);
 
-    let newImage = document.createElementNS("http://www.w3.org/2000/svg", "image");
-    newImage.setAttribute("width", puzzleWidth + "px");
-    newImage.setAttribute("height", puzzleHeight + "px");
+    // let newImage = document.createElementNS("http://www.w3.org/2000/svg", "image");
+    let newImage = document.createElementNS("http://www.w3.org/2000/svg", "use");
+    // newImage.setAttribute("width", puzzleWidth + "px");
+    // newImage.setAttribute("height", puzzleHeight + "px");
     newImage.setAttribute("clip-path", "url(#" + shapeid + ")");
     newImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', imagePuzzle);
 
@@ -277,7 +294,8 @@ function grabbable() {
         // (B7) ON DROP - DO SOMETHING  (current)
         i.addEventListener("drop", function(evt) {
             evt.preventDefault();
-            if (this != current) {
+            current.style.zIndex = zIndex++;
+            if (this != current) { // Current : pièce déplacé, this pièce remplacé
                 const currentSibling = current.nextSibling === this ? current : current.nextSibling;
 
                 let currentTransform = current.style.transform;
@@ -319,4 +337,29 @@ function rechargerPage() {
     window.location.reload()
 }
 
-document.addEventListener("DOMContentLoaded", function() { catalogueImage() });
+function previewFile() {
+    // The button where the user chooses the local image to display
+    var file = document.querySelector('input[type=file]').files[0];
+    if (file) {
+        // FileReader instance
+        var reader = new FileReader();
+        // When the image is loaded we set it as source of our img tag
+        reader.onloadend = async function() {
+            // Where you will display your image
+            await _loadImage(reader.result, modele);
+            chargerPuzzle()
+        }
+
+        // Load image as a base64 encoded URI
+        reader.readAsDataURL(file);
+    }
+}
+async function _loadImageSvg(dataImage, elem) {
+    return new Promise((resolve, reject) => {
+        elem.setAttributeNS('http://www.w3.org/1999/xlink', 'href', dataImage);
+        document.querySelector('#svgmodele').onload = () => resolve(elem); // !!!!! ko ici
+        elem.onerror = reject;
+        console.log("alors?")
+    });
+}
+document.addEventListener("DOMContentLoaded", function() { chargerImage() });

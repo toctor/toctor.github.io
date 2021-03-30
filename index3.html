@@ -25,16 +25,20 @@
         <input class="taille" type="radio" name="level" value="4">Normal
         <input class="taille" type="radio" name="level" value="6">Difficile
         <button id="changer">Changer d'image</button>
+        <input type="file" onchange="previewFile()">
     </div>
 
     <div id="results">
         <h4>Bravo!</h4>
         <button id="recharger">Rejouer</button>
     </div>
-    <svg>
+    <svg id="svgmodele">
         <filter id="pieceBorderFilter">
             <feMorphology operator="dilate" in="SourceGraphic" radius="1"/>
         </filter>
+        <defs>
+            <image id="imgmodele" xlink:href=""></image>
+        </defs>
     </svg>
 </body>
 
