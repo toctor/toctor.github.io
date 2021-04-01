@@ -5,6 +5,10 @@ body {
     background-color: black;
 }
 
+#tapis div {
+    background: rgb(87, 145, 192);
+}
+
 
 /* #puzzle {
     background: greenyellow;

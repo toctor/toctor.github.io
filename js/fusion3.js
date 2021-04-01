@@ -28,11 +28,12 @@ var imagedebug = 'https://unsplash.it/600/600?image=598' // 1074 : lion
 var gridSize = 4,
     images, imgWidth, imgHeight,
     imagePuzzle, modele, puzzle, xyshape = [],
+    tapis,
     puzzleHeight = 300,
     puzzleWidth = 300, // @todo : ajust with screen size
     pWidth, pHeight,
     pWidth10, pHeight10,
-    zIndex = 0;
+    draggedPiece, zIndex = 0;
 
 
 async function chargerImage() {
@@ -45,6 +46,7 @@ async function chargerImage() {
     imagePuzzle = images[i]; // random image
 
     modele = document.querySelector("#modele");
+    tapis = document.querySelector("#tapis");
     await _loadImage(imagePuzzle, modele);
 
     await chargerPuzzle();
@@ -103,11 +105,12 @@ function slice() {
 
     //style dynamique
     for (let i = 0; i < document.styleSheets[0].cssRules.length; i++) {
-        if (document.styleSheets[0].cssRules[i].selectorText == ".puzzlegrid") {
+        if (document.styleSheets[0].cssRules[i].selectorText == ".puzzlegrid" || document.styleSheets[0].cssRules[i].selectorText == ".tapisgrid") {
             document.styleSheets[0].deleteRule(i);
         }
     }
     document.styleSheets[0].insertRule(".puzzlegrid {display: grid; grid-template-columns: repeat(" + xMax + ", " + pWidth + "px);  grid-template-rows: repeat(" + yMax + ", " + pHeight + "px);}");
+    document.styleSheets[0].insertRule(".tapisgrid  {display: grid; grid-template-columns: repeat(" + xMax / 2 + ", " + (pWidth + pWidth10 * 4) + "px);  grid-template-rows: repeat(" + yMax / 2 + ", " + (pHeight + pHeight10 * 4) + "px);}");
 
     document.querySelector('#imgmodele').setAttribute("width", puzzleWidth + "px");
     document.querySelector('#imgmodele').setAttribute("height", puzzleHeight + "px");
@@ -127,6 +130,13 @@ function slice() {
             puzzle.appendChild(piece);
         }
     }
+
+    for (let y = 0; y < yMax / 2; y++) {
+        for (let x = 0; x < xMax / 2; x++) {
+            piece = document.createElement("div");
+            tapis.appendChild(piece);
+        }
+    }
 }
 
 function shuffle() {
@@ -135,7 +145,7 @@ function shuffle() {
         for (let i = puzzle.children.length; i >= 0; i--) {
             puzzle.appendChild(puzzle.children[Math.random() * i | 0]);
         }
-    } while (estReussi())
+    } while (success())
 }
 
 function createsvgpath(x, y, xMax, yMax) {
@@ -155,13 +165,6 @@ function createsvgpath(x, y, xMax, yMax) {
     };
 
     let shapeid = "path_" + x + "_" + y; //@todo test si shape existe déjà
-    // let newfeMorphology = document.createElementNS("http://www.w3.org/2000/svg", "feMorphology"); // todo : une seule fois en dynamique
-    // newfeMorphology.setAttribute("operator", "dilate");
-    // newfeMorphology.setAttribute("in", "SourceGraphic");
-    // newfeMorphology.setAttribute("radius", "1");
-    // let newFilter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
-    // newFilter.setAttribute("id", "pieceBorderFilter");
-    // newFilter.appendChild(newfeMorphology);
 
     let newRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
     newRect.setAttribute("clip-path", "url(#" + shapeid + ")");
@@ -240,31 +243,22 @@ function trsl(x, y, c, r, adjust = 0) {
 }
 
 function grabbable() {
-    var items = document.querySelectorAll("#puzzle div");
-    var current = null; // élément déplacé
-    for (let i of items) {
+    draggedPiece = null; // élément déplacé
+    for (let i of document.querySelectorAll("#puzzle div")) {
 
         i.addEventListener("dragstart", function(ev) {
-            current = this;
-
-            current.classList.add("drag");
-            // for (let it of items) {
-            //     it.classList.add(it != current ? "hint" : "drag")
-            // }
-
-            // while (document.querySelector("#ghostbucket").firstChild) {
-            //     document.querySelector("#ghostbucket").removeChild(document.querySelector("#ghostbucket").firstChild);
-            // }
+            draggedPiece = this;
+            draggedPiece.classList.add("drag");
 
             // set custom Ghost 
-            var ghost = document.querySelector("#svg" + current.getAttribute("position")).cloneNode(true);
+            var ghost = document.querySelector("#svg" + draggedPiece.getAttribute("position")).cloneNode(true);
             document.querySelector("#ghostbucket").appendChild(ghost);
             ev.dataTransfer.setDragImage(ghost, Math.floor(pWidth / 2), Math.floor(pHeight / 2));
         });
 
         // (B3) DRAG ENTER - Début survol
         i.addEventListener("dragenter", function(ev) {
-            if (this != current) { this.classList.add("active"); }
+            if (this != draggedPiece) { this.classList.add("active"); }
         });
 
         // (B4) DRAG LEAVE - Termine survol
@@ -274,7 +268,7 @@ function grabbable() {
 
         // (B5) DRAG END - REMOVE ALL HIGHLIGHTS
         i.addEventListener("dragend", function() {
-            for (let it of items) {
+            for (let it of document.querySelectorAll("#puzzle div")) {
                 // it.classList.remove("hint");
                 it.classList.remove("drag");
                 it.classList.remove("active");
@@ -289,34 +283,55 @@ function grabbable() {
             evt.preventDefault();
         });
 
-        // (B7) ON DROP - DO SOMETHING  (current)
-        i.addEventListener("drop", function(evt) {
+        // (B7) ON DROP - DO SOMETHING  (draggedPiece)
+        i.addEventListener("drop", drop);
+    }
+
+    // tapis
+
+    for (let i of document.querySelectorAll("#tapis div")) {
+
+        i.addEventListener("dragover", function(evt) {
             evt.preventDefault();
-            current.style.zIndex = zIndex++;
-            if (this != current) { // Current : pièce déplacé, this pièce remplacé
-                const currentSibling = current.nextSibling === this ? current : current.nextSibling;
-
-                let currentTransform = current.style.transform;
-                current.style.transform = this.style.transform;
-                this.style.transform = currentTransform;
-
-                this.parentNode.insertBefore(current, this);
-                this.parentNode.insertBefore(this, currentSibling);
-
-                items = document.querySelectorAll("#puzzle div");
-
-                if (estReussi()) {
-                    // document.querySelector('.console_wrapper').style.display = "none";
-                    document.querySelector('#results').style.display = "block";
-                    document.querySelector('#modele').style.display = "none";
-                    document.body.style.backgroundColor = "green";
-                }
-            }
         });
+
+        i.addEventListener("drop", drop);
     }
 }
 
-function estReussi() {
+function drop(evt) {
+    evt.preventDefault();
+    draggedPiece.style.zIndex = zIndex++;
+    if (this != draggedPiece) {
+        // draggedPiece : pièce déplacé, 
+        // this : pièce remplacé
+        const draggedPieceSibling = draggedPiece.nextSibling;
+        const draggedPieceParent = draggedPiece.parentNode;
+        this.parentNode.insertBefore(draggedPiece, this);
+        if (draggedPieceSibling) {
+            if (draggedPieceSibling != this) {
+                draggedPieceSibling.parentNode.insertBefore(this, draggedPieceSibling);
+            } else {
+                draggedPieceParent.insertBefore(this, draggedPiece);
+            }
+        } else {
+            draggedPieceParent.appendChild(this);
+        }
+
+        if (success()) {
+            // document.querySelector('.console_wrapper').style.display = "none";
+            document.querySelector('#results').style.display = "block";
+            document.querySelector('#modele').style.display = "none";
+            document.body.style.backgroundColor = "green";
+        }
+    }
+}
+
+function success() {
+    if (document.querySelector('#tapis div.piece')) {
+        return false;
+    }
+
     let puzzleSolved = true;
     [...puzzle.children].forEach((e, index) => {
         if (e.getAttribute("position")) {
