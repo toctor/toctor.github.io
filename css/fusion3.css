@@ -19,21 +19,21 @@ body {
     background: rgb(25, 36, 46);
 }
 
-
-/* #puzzle {
-    background: greenyellow;
-    border-color: yellow;
-    border: 2px solid red;
-} */
+#puzzle {
+    background: rgb(29, 15, 78);
+    border-color: rgb(30, 20, 83);
+    border: 2px solid rgb(16, 6, 54);
+}
 
 .piece {
     display: inline-block;
     cursor: grab;
 }
 
-.gbordure {
+
+/* .gbordure {
     filter: url("#pieceBorderFilter");
-}
+} */
 
 .piece svg image {
     border: 1px solid red;

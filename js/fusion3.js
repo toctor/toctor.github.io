@@ -1,17 +1,19 @@
 /* @todo
 
-    tapis où déposer une pièce 
+enregister avancement pour reprendre plus tard
 
-    modele masquable
-    hint : passer par dessus modele pou visualiser  emplacement cible 
+ghost non transparent (opacity 1 ko)
 
-    animation fin puzzle (fex artifice, cube 3d, ...)
+modele masquable
+hint : passer par dessus modele pou visualiser  emplacement cible 
+
+animation fin puzzle (fex artifice, cube 3d, ...)
 
 
-    
-    compteur hint
-    puzzle & modele zoomable
-    timer
+
+compteur hint
+puzzle & modele zoomable
+timer
     
 
 menu, 
@@ -83,9 +85,10 @@ async function chargerPuzzle() {
 
     slice();
 
+    grabbable();
+
     shuffle()
 
-    grabbable();
 }
 
 function slice() {
@@ -110,27 +113,15 @@ function slice() {
     puzzle.style.width = (puzzleWidth + pWidth10 * 4) + 'px';
     puzzle.style.height = (puzzleHeight + pHeight10 * 4) + 'px';
 
-    //style dynamique
-    // for (let i = 0; i < document.styleSheets[0].cssRules.length; i++) {
-    //     if (document.styleSheets[0].cssRules[i].selectorText == ".puzzlegrid" || document.styleSheets[0].cssRules[i].selectorText == ".tapisgrid") {
-    //         document.styleSheets[0].deleteRule(i);
-    //     }
-    // }
-    /*
-        [...puzzle.children].forEach((e, index) => {
-        if (e.getAttribute("position")) {
-            puzzleSolved = (e.getAttribute("position") != index ? false : puzzleSolved);
-        }
-    });
-    */
-
     for (let i = document.styleSheets[0].cssRules.length - 1; i >= 0; i--) {
-        if (document.styleSheets[0].cssRules[i].selectorText == ".puzzlegrid" || document.styleSheets[0].cssRules[i].selectorText == ".tapisgrid") {
+        let stylei = document.styleSheets[0].cssRules[i].selectorText;
+        if (stylei == ".puzzlegrid" || stylei == ".tapisgrid" || stylei == ".gbordure") {
             document.styleSheets[0].deleteRule(i);
         }
     }
     document.styleSheets[0].insertRule(".puzzlegrid {display: grid; grid-template-columns: repeat(" + xMax + ", " + pWidth + "px);  grid-template-rows: repeat(" + yMax + ", " + pHeight + "px);}");
-    document.styleSheets[0].insertRule(".tapisgrid  {display: grid; grid-template-columns: repeat(" + (xMax - 1) + ", " + (pWidth + pWidth10 * 4) + "px);  grid-template-rows: repeat(" + (yMax - 1) + ", " + (pHeight + pHeight10 * 4) + "px);}");
+    document.styleSheets[0].insertRule(".tapisgrid  {display: grid; grid-template-columns: repeat(" + (xMax) + ", " + (pWidth + pWidth10 * 4) + "px);  grid-template-rows: repeat(" + (yMax) + ", " + (pHeight + pHeight10 * 4) + "px);}");
+    document.styleSheets[0].insertRule('.gbordure  {filter: url("#pieceBorderFilter");}');
 
     document.querySelector('#imgmodele').setAttribute("width", puzzleWidth + "px");
     document.querySelector('#imgmodele').setAttribute("height", puzzleHeight + "px");
@@ -151,18 +142,26 @@ function slice() {
         }
     }
 
-    for (let y = 0; y < yMax - 1; y++) {
-        for (let x = 0; x < xMax - 1; x++) {
+    for (let y = 0; y < yMax; y++) {
+        for (let x = 0; x < xMax; x++) {
             tapis.appendChild(document.createElement("div"));
         }
     }
 }
 
-function shuffle() {
+function shuffle1() {
     do {
-        console.log("shuffle")
         for (let i = puzzle.children.length; i >= 0; i--) {
             puzzle.appendChild(puzzle.children[Math.random() * i | 0]);
+        }
+    } while (success())
+}
+
+function shuffle() {
+    do {
+        for (let i = puzzle.children.length; i >= 0; i--) {
+            puzzle.appendChild(tapis.children[i - 1]);
+            tapis.appendChild(puzzle.children[Math.random() * i | 0]);
         }
     } while (success())
 }
@@ -189,7 +188,7 @@ function createsvgpath(x, y, xMax, yMax) {
     newRect.setAttribute("clip-path", "url(#" + shapeid + ")");
     newRect.setAttribute("width", imgWidth + "px");
     newRect.setAttribute("height", imgHeight + "px");
-    newRect.setAttribute("fill", "white");
+    newRect.setAttribute("fill", "#1D0F4E");
     let newG = document.createElementNS("http://www.w3.org/2000/svg", "g");
     newG.setAttribute("class", "gbordure");
     newG.appendChild(newRect);
@@ -271,6 +270,7 @@ function grabbable() {
 
             // set custom Ghost 
             var ghost = document.querySelector("#svg" + draggedPiece.getAttribute("position")).cloneNode(true);
+            // ghost.style.opacity = '1.0';
             document.querySelector("#ghostbucket").appendChild(ghost);
             ev.dataTransfer.setDragImage(ghost, Math.floor(pWidth / 2), Math.floor(pHeight / 2));
         });
@@ -343,6 +343,14 @@ function drop(evt) {
             document.querySelector('#modele').style.display = "none";
             document.querySelector('#tapis').style.display = "none";
             document.body.style.backgroundColor = "green";
+
+            for (let i = document.styleSheets[0].cssRules.length - 1; i >= 0; i--) {
+                let stylei = document.styleSheets[0].cssRules[i].selectorText;
+                if (stylei == ".gbordure") {
+                    document.styleSheets[0].deleteRule(i);
+                }
+            }
+
         }
     }
 }
@@ -388,13 +396,13 @@ function previewFile() {
     }
 }
 
-async function _loadImageSvg(dataImage, elem) {
-    return new Promise((resolve, reject) => {
-        elem.setAttributeNS('http://www.w3.org/1999/xlink', 'href', dataImage);
-        document.querySelector('#svgmodele').onload = () => resolve(elem); // !!!!! ko ici
-        elem.onerror = reject;
-        console.log("alors?")
-    });
-}
+// async function _loadImageSvg(dataImage, elem) {
+//     return new Promise((resolve, reject) => {
+//         elem.setAttributeNS('http://www.w3.org/1999/xlink', 'href', dataImage);
+//         document.querySelector('#svgmodele').onload = () => resolve(elem); // !!!!! ko ici
+//         elem.onerror = reject;
+//         console.log("alors?")
+//     });
+// }
 
 document.addEventListener("DOMContentLoaded", function() { chargerImage() });
