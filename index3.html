@@ -11,7 +11,7 @@
 </head>
 
 <body>
-    <div>
+    <div id="gamespace">
         <div id="puzzle" class="puzzlegrid"></div>
         <div id="tapis" class="tapisgrid"></div>
     </div>
@@ -23,11 +23,13 @@
     </div>
 
     <div id="choix">
-        <input class="taille" type="radio" name="level" value="3">Facile
-        <input class="taille" type="radio" name="level" value="4">Normal
-        <input class="taille" type="radio" name="level" value="6">Difficile
-        <button id="changer">Changer d'image</button>
-        <input type="file" onchange="previewFile()">
+        <input class="taille" type="radio" name="level" value="3">Facile (3x3)
+        <input class="taille" type="radio" name="level" value="4" checked="checked">Normal (4x4)
+        <input class="taille" type="radio" name="level" value="6">Difficile (6x6)
+        <form>
+            <button id="changer">Changer d'image</button>
+            <input type="file" onchange="previewFile()">
+        </form>
     </div>
 
     <div id="results">

@@ -39,6 +39,7 @@ var gridSize = 4,
 async function chargerImage() {
     document.querySelectorAll(".taille").forEach(elem => elem.addEventListener("change", changerNiveau));
     document.querySelector("#changer").addEventListener("click", chargerImage);
+    document.querySelector("form").reset();
     document.querySelector("#recharger").addEventListener("click", rechargerPage);
     images = ['http://source.unsplash.com/random'];
     //let i = (Math.floor((Math.random() * (images.length - 1)) + 0.5));
@@ -72,11 +73,17 @@ async function chargerPuzzle() {
         puzzle.removeChild(puzzle.firstChild);
     }
 
+    tapis = document.querySelector('#tapis');
+    while (tapis.firstChild) {
+        tapis.removeChild(tapis.firstChild);
+    }
+    document.querySelector('#tapis').style.display = "grid";
+    document.querySelector('#modele').style.display = "block";
+
+
     slice();
 
-    // shuffle()
-
-    document.querySelector('#modele').style.display = "block";
+    shuffle()
 
     grabbable();
 }
@@ -104,13 +111,26 @@ function slice() {
     puzzle.style.height = (puzzleHeight + pHeight10 * 4) + 'px';
 
     //style dynamique
-    for (let i = 0; i < document.styleSheets[0].cssRules.length; i++) {
+    // for (let i = 0; i < document.styleSheets[0].cssRules.length; i++) {
+    //     if (document.styleSheets[0].cssRules[i].selectorText == ".puzzlegrid" || document.styleSheets[0].cssRules[i].selectorText == ".tapisgrid") {
+    //         document.styleSheets[0].deleteRule(i);
+    //     }
+    // }
+    /*
+        [...puzzle.children].forEach((e, index) => {
+        if (e.getAttribute("position")) {
+            puzzleSolved = (e.getAttribute("position") != index ? false : puzzleSolved);
+        }
+    });
+    */
+
+    for (let i = document.styleSheets[0].cssRules.length - 1; i >= 0; i--) {
         if (document.styleSheets[0].cssRules[i].selectorText == ".puzzlegrid" || document.styleSheets[0].cssRules[i].selectorText == ".tapisgrid") {
             document.styleSheets[0].deleteRule(i);
         }
     }
     document.styleSheets[0].insertRule(".puzzlegrid {display: grid; grid-template-columns: repeat(" + xMax + ", " + pWidth + "px);  grid-template-rows: repeat(" + yMax + ", " + pHeight + "px);}");
-    document.styleSheets[0].insertRule(".tapisgrid  {display: grid; grid-template-columns: repeat(" + xMax / 2 + ", " + (pWidth + pWidth10 * 4) + "px);  grid-template-rows: repeat(" + yMax / 2 + ", " + (pHeight + pHeight10 * 4) + "px);}");
+    document.styleSheets[0].insertRule(".tapisgrid  {display: grid; grid-template-columns: repeat(" + (xMax - 1) + ", " + (pWidth + pWidth10 * 4) + "px);  grid-template-rows: repeat(" + (yMax - 1) + ", " + (pHeight + pHeight10 * 4) + "px);}");
 
     document.querySelector('#imgmodele').setAttribute("width", puzzleWidth + "px");
     document.querySelector('#imgmodele').setAttribute("height", puzzleHeight + "px");
@@ -131,10 +151,9 @@ function slice() {
         }
     }
 
-    for (let y = 0; y < yMax / 2; y++) {
-        for (let x = 0; x < xMax / 2; x++) {
-            piece = document.createElement("div");
-            tapis.appendChild(piece);
+    for (let y = 0; y < yMax - 1; y++) {
+        for (let x = 0; x < xMax - 1; x++) {
+            tapis.appendChild(document.createElement("div"));
         }
     }
 }
@@ -322,6 +341,7 @@ function drop(evt) {
             // document.querySelector('.console_wrapper').style.display = "none";
             document.querySelector('#results').style.display = "block";
             document.querySelector('#modele').style.display = "none";
+            document.querySelector('#tapis').style.display = "none";
             document.body.style.backgroundColor = "green";
         }
     }
@@ -367,6 +387,7 @@ function previewFile() {
         reader.readAsDataURL(file);
     }
 }
+
 async function _loadImageSvg(dataImage, elem) {
     return new Promise((resolve, reject) => {
         elem.setAttributeNS('http://www.w3.org/1999/xlink', 'href', dataImage);
@@ -375,4 +396,5 @@ async function _loadImageSvg(dataImage, elem) {
         console.log("alors?")
     });
 }
+
 document.addEventListener("DOMContentLoaded", function() { chargerImage() });
