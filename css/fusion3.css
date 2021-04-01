@@ -5,8 +5,18 @@ body {
     background-color: black;
 }
 
+#gamespace {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+}
+
+#tapis {
+    margin-top: 20px;
+}
+
 #tapis div {
-    background: rgb(87, 145, 192);
+    background: rgb(25, 36, 46);
 }
 
 
