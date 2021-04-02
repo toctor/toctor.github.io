@@ -1,55 +1,51 @@
-/* (X) DOES NOT MATTER */
+/* html, */
 
-html,
 body {
     font-family: arial, sans-serif;
     background-color: black;
 }
 
 
-/* (A) LIST STYLES */
+/* #puzzle {
+    background: greenyellow;
+    border-color: yellow;
+    border: 2px solid red;
+} */
 
-#puzzle {
-    display: -webkit-flex;
-    display: flex;
-    -webkit-flex-wrap: wrap;
-    flex-wrap: wrap;
-    border: 2px red;
+.piece {
     display: inline-block;
     margin: 10px;
     padding: 0;
-    /* height: 50vh; /* 50% of Viewport height */
-    /* width:  75vw; /* 75% of Viewport width */
     border-width: 2px;
     border-color: green;
 }
 
-#puzzle li {
-    display: inline-block;
-    float: left;
-    cursor: grab
+.gbordure {
+    filter: url("#pieceBorderFilter");
 }
 
-
-/* (B) DRAG-AND-DROP HINT */
-
-#puzzle li.drag {
-    /* border: 1px solid #d4d4d4; */
-    background: repeating-linear-gradient( -45deg, #fff, #fff 4px, #d4d4d4 4px, #d4d4d4 5px);
+.piece svg image {
+    border: 1px solid red;
 }
 
-#puzzle li.hint {
-    background: rgb(12, 236, 49);
+.drag svg image {
+    border: 1px solid #d4d4d4;
+    /* background: repeating-linear-gradient( -45deg, #fff, #fff 4px, #d4d4d4 4px, #d4d4d4 5px); */
 }
 
-#puzzle li.active {
+.active svg image {
     /* cellule survolée */
     background: #ffd4d4;
+    opacity: 0.5;
+}
+
+#divmodele {
+    display: block;
+    margin: 50px;
 }
 
 #modele {
-    width: 300px;
-    /* background-image: url("http://source.unsplash.com/random/150x150"); */
+    width: 200px;
 }
 
 #results {
