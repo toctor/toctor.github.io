@@ -2,6 +2,8 @@
 
 enregister avancement pour reprendre plus tard
 
+ajuster luminosité tapis, puzzle (pour image trop sombre)
+
 ghost non transparent (opacity 1 ko)
 
 modele masquable
@@ -191,7 +193,8 @@ function createsvgpath(x, y, xMax, yMax) {
     // newImage.setAttribute("width", puzzleWidth + "px");
     // newImage.setAttribute("height", puzzleHeight + "px");
     newImage.setAttribute("clip-path", "url(#" + shapeid + ")");
-    newImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', imagePuzzle);
+    // newImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', imagePuzzle);
+    newImage.setAttribute('href', imagePuzzle);
 
     let xPosition = x * pWidth // + pWidth10 * (left ? 2 : 0)
     let yPosition = y * pHeight // + pHeight10 * (top ? 2 : 0)
@@ -262,9 +265,15 @@ function grabbable() {
             draggedPiece.classList.add("drag");
 
             // set custom Ghost 
-            var ghost = document.querySelector("#svg" + draggedPiece.getAttribute("position")).cloneNode(true);
-            // ghost.style.opacity = '1.0';
-            document.querySelector("#ghostbucket").appendChild(ghost);
+            //var ghost = document.querySelector("#svg" + draggedPiece.getAttribute("position")).cloneNode(true);
+            var nopiece = draggedPiece.getAttribute("position");
+
+            var ghost = document.querySelector("#ghost" + nopiece)
+            if (!ghost) {
+                ghost = document.querySelector("#svg" + nopiece).cloneNode(true);
+                ghost.setAttribute("id", "ghost" + nopiece);
+                document.querySelector("#ghostbucket").appendChild(ghost);
+            }
             ev.dataTransfer.setDragImage(ghost, Math.floor(pWidth / 2), Math.floor(pHeight / 2));
         });
 
@@ -285,9 +294,9 @@ function grabbable() {
                 it.classList.remove("drag");
                 it.classList.remove("active");
             }
-            while (document.querySelector("#ghostbucket").firstChild) {
-                document.querySelector("#ghostbucket").removeChild(document.querySelector("#ghostbucket").firstChild);
-            }
+            // while (document.querySelector("#ghostbucket").firstChild) {
+            //     document.querySelector("#ghostbucket").removeChild(document.querySelector("#ghostbucket").firstChild);
+            // }
         });
 
         // (B6) DRAG OVER - PREVENT THE DEFAULT "DROP", SO WE CAN DO OUR OWN
@@ -388,14 +397,5 @@ function previewFile() {
         reader.readAsDataURL(file);
     }
 }
-
-// async function _loadImageSvg(dataImage, elem) {
-//     return new Promise((resolve, reject) => {
-//         elem.setAttributeNS('http://www.w3.org/1999/xlink', 'href', dataImage);
-//         document.querySelector('#svgmodele').onload = () => resolve(elem); // !!!!! ko ici
-//         elem.onerror = reject;
-//         console.log("alors?")
-//     });
-// }
 
 document.addEventListener("DOMContentLoaded", function() { chargerImage() });
