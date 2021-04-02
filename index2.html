@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- todo
+
+        puuzle clip-path 
+        taille récise de chaque pièce
+        taille image globale et pieces au bon ratio
+
+        shadow puzzle shape
+
+ergonomie message, choix, attente
+    puzzle 80%, modele 20%
+        https://www.freecodecamp.org/news/css-responsive-image-tutorial/
+
+    modele masquable
+    puzzle & modele zoomable
+    hint ? compteur hint
+
+    timer
+    
+choix image externe (galery, ...)
+
+menu, Ecran config
+param
+
+forme puzzle carton emboité
+bordure
+
+---2---
+modification css insert  element
+animation fin puzzle (fex artifice, cube 3d, ...)
+
+---3---
+voice command
+chatbot
+rconnaissance image ia
+
+https://jsfiddle.net/
+ -->
+    <title>
+        Drag-and-drop Sortable List Demo
+    </title>
+
+    <!-- (A) LOAD CSS + JS -->
+    <link rel="stylesheet" href="css/fusion2.css" />
+    <script src="js/fusion2.js"></script>
+</head>
+
+<body>
+    <!-- <svg xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <clipPath id="formepiece">
+                <path d="M 20 20 L 20 120 L 55 120 C 30 160 110 160 85 120 L 120 120 L 120 20 L 85 20 C 110 60 30 60 55 20 z"/>
+            </clipPath>            
+        </defs>
+    </svg> -->
+
+
+    <!-- (B) THE LIST -->
+    <div id="puzzle">
+    </div>
+
+
+    <div>
+        <div id="ghostbucket"></div>
+        <div id="divmodele">
+            <img id="modele" alt="Puzzle full image">
+        </div>
+    </div>
+
+    <div id="choix">
+        <input class="taille" type="radio" name="level" value="3">Facile
+        <input class="taille" type="radio" name="level" value="4">Normal
+        <input class="taille" type="radio" name="level" value="6">Difficile
+        <button id="changer">Changer d'image</button>
+    </div>
+
+    <div id="results">
+        <h4>Bravo!</h4>
+        <button id="recharger">Rejouer</button>
+    </div>
+
+
+
+</body>
+
+</html>

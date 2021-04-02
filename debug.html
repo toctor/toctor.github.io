@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>SVG Image</title>
+    <style>
+        body {
+            font-family: arial, sans-serif;
+            background-color: green;
+        }
+        
+        .static {
+            cursor: not-allowed;
+        }
+        
+        .draggable {
+            cursor: move;
+        }
+        
+        .piece {
+            display: inline-block;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="droparea" ondrop="drop(event)" ondragover="allowDrop(event)">
+        drop area
+    </div>
+
+
+
+    <div draggable="true" position="9" class="piece"><svg width="75px" height="75px" viewBox="75 150 120 120"><clipPath id="path_1_2" transform="translate(22, 23)"><path d="M 75 150 c 14,0 42,14 28,-7 c -7,-14 26,-14 19,0 c -14,21 14,7 28,7 c 0,14 14,42 -7,28 c -14,-7 -14,26 0,19 c 21,-14 7,14 7,28 c -14,0 -42,-14 -28,7 c 7,14 -26,14 -19,0 c 14,-21 -14,-7 -28,-7 c 0,-14 -14,-42 7,-28 c 14,7 14,-26 0,-19 c -21,14 -7,-14 -7,-28 "></path></clipPath><image width="600px" height="600px" clip-path="url(#path_1_2)" xlink:href="https://unsplash.it/600/600?image=1074"></image></svg></div>
+    <div draggable="true" position="0" class="piece">0
+        <svg width="75px" height="75px" viewBox="0 0 98 98">
+            <clipPath id="path_0_0" transform="translate(0, 0)">
+                <path d="M 0 0 L 75,0 C 75,19 67,38 82,30 C 97,19 97,56 82,45 C 67,37 75,56 75,75 C 56,75 37,82 45,67 C 56,52 19,52 30,67 C 38,82 19,75 0,75 Z"></path>
+            </clipPath>
+            <image width="600px" height="600px" clip-path="url(#path_0_0)" xlink:href="https://unsplash.it/600/600?image=1074"></image>
+        </svg>
+    </div>
+
+    <div draggable="true" position="1" class="piece">1<svg width="75px" height="75px" viewBox="0 0 120 98"><clipPath id="path_1_0" transform="translate(-23, 0)"><path d="M 0 0 L 75,0 C 75,19 82,38 67,30 C 52,19 52,56 67,45 C 82,37 75,56 75,75 C 56,75 37,67 45,82 C 56,97 19,97 30,82 C 38,67 19,75 0,75 C 0,56 -7,37 8,45 C 23,56 23,19 8,30 C -7,38 0,19 0,0 "></path></clipPath><image width="600px" height="600px" clip-path="url(#path_1_0)" xlink:href="https://unsplash.it/600/600?image=1074"></image></svg></div>
+    <div draggable="true" position="2" class="piece">2<svg width="75px" height="75px" viewBox="0 0 120 98"><clipPath id="path_2_0" transform="translate(22, 0)"><path d="M 0 0 L 75,0 C 75,19 67,38 82,30 C 97,19 97,56 82,45 C 67,37 75,56 75,75 C 56,75 37,82 45,67 C 56,52 19,52 30,67 C 38,82 19,75 0,75 C 0,56 8,37 -7,45 C -22,56 -22,19 -7,30 C 8,38 0,19 0,0 "></path></clipPath><image width="600px" height="600px" clip-path="url(#path_2_0)" xlink:href="https://unsplash.it/600/600?image=1074"></image></svg></div>
+
+    <!--div id="puzzle" style="width: 300px; height: 300px;">
+        <div draggable="true" position="3" class="piece">3<svg width="75px" height="75px" viewBox="0 0 98 98"><clipPath id="path_3_0" transform="translate(-23, 0)"><path d="M 0 0 L 75,0 L 75,75 C 56,75 37,82 45,67 C 56,52 19,52 30,67 C 38,82 19,75 0,75 C 0,56 -7,37 8,45 C 23,56 23,19 8,30 C -7,38 0,19 0,0 "></path></clipPath><image width="600px" height="600px" clip-path="url(#path_3_0)" xlink:href="https://unsplash.it/600/600?image=1074"></image></svg></div>
+        <div draggable="true" position="4" class="piece">4<svg width="75px" height="75px" viewBox="0 0 98 120"><clipPath id="path_0_1" transform="translate(0, 22)"><path d="M 0 0 C 19,0 38,8 30,-7 C 19,-22 56,-22 45,-7 C 37,8 56,0 75,0 C 75,19 82,38 67,30 C 52,19 52,56 67,45 C 82,37 75,56 75,75 C 56,75 37,82 45,67 C 56,52 19,52 30,67 C 38,82 19,75 0,75 Z"></path></clipPath><image width="600px" height="600px" clip-path="url(#path_0_1)" xlink:href="https://unsplash.it/600/600?image=1074"></image></svg></div>
+        <div draggable="true" position="5" class="piece">5<svg width="75px" height="75px" viewBox="0 0 120 120"><clipPath id="path_1_1" transform="translate(22, -23)"><path d="M 0 0 C 19,0 38,-7 30,8 C 19,23 56,23 45,8 C 37,-7 56,0 75,0 C 75,19 82,38 67,30 C 52,19 52,56 67,45 C 82,37 75,56 75,75 C 56,75 37,67 45,82 C 56,97 19,97 30,82 C 38,67 19,75 0,75 C 0,56 8,37 -7,45 C -22,56 -22,19 -7,30 C 8,38 0,19 0,0 "></path></clipPath><image width="600px" height="600px" clip-path="url(#path_1_1)" xlink:href="https://unsplash.it/600/600?image=1074"></image></svg></div>
+        <div draggable="true" position="6" class="piece">6<svg width="75px" height="75px" viewBox="0 0 120 120"><clipPath id="path_2_1" transform="translate(22, 22)"><path d="M 0 0 C 19,0 38,8 30,-7 C 19,-22 56,-22 45,-7 C 37,8 56,0 75,0 C 75,19 82,38 67,30 C 52,19 52,56 67,45 C 82,37 75,56 75,75 C 56,75 37,82 45,67 C 56,52 19,52 30,67 C 38,82 19,75 0,75 C 0,56 8,37 -7,45 C -22,56 -22,19 -7,30 C 8,38 0,19 0,0 "></path></clipPath><image width="600px" height="600px" clip-path="url(#path_2_1)" xlink:href="https://unsplash.it/600/600?image=1074"></image></svg></div>
+        <div draggable="true" position="7" class="piece">7<svg width="75px" height="75px" viewBox="0 0 98 120"><clipPath id="path_3_1" transform="translate(22, 22)"><path d="M 0 0 C 19,0 38,8 30,-7 C 19,-22 56,-22 45,-7 C 37,8 56,0 75,0 L 75,75 C 56,75 37,67 45,82 C 56,97 19,97 30,82 C 38,67 19,75 0,75 C 0,56 8,37 -7,45 C -22,56 -22,19 -7,30 C 8,38 0,19 0,0 "></path></clipPath><image width="600px" height="600px" clip-path="url(#path_3_1)" xlink:href="https://unsplash.it/600/600?image=1074"></image></svg></div>
+        <div draggable="true" position="8" class="piece">8<svg width="75px" height="75px" viewBox="0 0 98 120"><clipPath id="path_0_2" transform="translate(0, 22)"><path d="M 0 0 C 19,0 38,8 30,-7 C 19,-22 56,-22 45,-7 C 37,8 56,0 75,0 C 75,19 82,38 67,30 C 52,19 52,56 67,45 C 82,37 75,56 75,75 C 56,75 37,67 45,82 C 56,97 19,97 30,82 C 38,67 19,75 0,75 Z"></path></clipPath><image width="600px" height="600px" clip-path="url(#path_0_2)" xlink:href="https://unsplash.it/600/600?image=1074"></image></svg></div>
+        <div draggable="true" position="9" class="piece">9<svg width="75px" height="75px" viewBox="0 0 120 120"><clipPath id="path_1_2" transform="translate(22, -23)"><path d="M 0 0 C 19,0 38,-7 30,8 C 19,23 56,23 45,8 C 37,-7 56,0 75,0 C 75,19 82,38 67,30 C 52,19 52,56 67,45 C 82,37 75,56 75,75 C 56,75 37,82 45,67 C 56,52 19,52 30,67 C 38,82 19,75 0,75 C 0,56 8,37 -7,45 C -22,56 -22,19 -7,30 C 8,38 0,19 0,0 "></path></clipPath><image width="600px" height="600px" clip-path="url(#path_1_2)" xlink:href="https://unsplash.it/600/600?image=1074"></image></svg></div>
+        <div draggable="true" position="10" class="piece">10<svg width="75px" height="75px" viewBox="0 0 120 120"><clipPath id="path_2_2" transform="translate(22, 22)"><path d="M 0 0 C 19,0 38,8 30,-7 C 19,-22 56,-22 45,-7 C 37,8 56,0 75,0 C 75,19 67,38 82,30 C 97,19 97,56 82,45 C 67,37 75,56 75,75 C 56,75 37,67 45,82 C 56,97 19,97 30,82 C 38,67 19,75 0,75 C 0,56 8,37 -7,45 C -22,56 -22,19 -7,30 C 8,38 0,19 0,0 "></path></clipPath><image width="600px" height="600px" clip-path="url(#path_2_2)" xlink:href="https://unsplash.it/600/600?image=1074"></image></svg></div>
+        <div draggable="true" position="11" class="piece">11<svg width="75px" height="75px" viewBox="0 0 98 120"><clipPath id="path_3_2" transform="translate(-23, -23)"><path d="M 0 0 C 19,0 38,-7 30,8 C 19,23 56,23 45,8 C 37,-7 56,0 75,0 L 75,75 C 56,75 37,82 45,67 C 56,52 19,52 30,67 C 38,82 19,75 0,75 C 0,56 -7,37 8,45 C 23,56 23,19 8,30 C -7,38 0,19 0,0 "></path></clipPath><image width="600px" height="600px" clip-path="url(#path_3_2)" xlink:href="https://unsplash.it/600/600?image=1074"></image></svg></div>
+        <div draggable="true" position="12" class="piece">12<svg width="75px" height="75px" viewBox="0 0 98 98"><clipPath id="path_0_3" transform="translate(0, -23)"><path d="M 0 0 C 19,0 38,-7 30,8 C 19,23 56,23 45,8 C 37,-7 56,0 75,0 C 75,19 82,38 67,30 C 52,19 52,56 67,45 C 82,37 75,56 75,75 L 0,75 Z"></path></clipPath><image width="600px" height="600px" clip-path="url(#path_0_3)" xlink:href="https://unsplash.it/600/600?image=1074"></image></svg></div>
+        <div draggable="true" position="13" class="piece">13<svg width="75px" height="75px" viewBox="0 0 120 98"><clipPath id="path_1_3" transform="translate(22, 22)"><path d="M 0 0 C 19,0 38,8 30,-7 C 19,-22 56,-22 45,-7 C 37,8 56,0 75,0 C 75,19 67,38 82,30 C 97,19 97,56 82,45 C 67,37 75,56 75,75 L 0,75 C 0,56 8,37 -7,45 C -22,56 -22,19 -7,30 C 8,38 0,19 0,0 "></path></clipPath><image width="600px" height="600px" clip-path="url(#path_1_3)" xlink:href="https://unsplash.it/600/600?image=1074"></image></svg></div>
+        <div draggable="true" position="14" class="piece">14<svg width="75px" height="75px" viewBox="0 0 120 98"><clipPath id="path_2_3" transform="translate(-23, -23)"><path d="M 0 0 C 19,0 38,-7 30,8 C 19,23 56,23 45,8 C 37,-7 56,0 75,0 C 75,19 67,38 82,30 C 97,19 97,56 82,45 C 67,37 75,56 75,75 L 0,75 C 0,56 -7,37 8,45 C 23,56 23,19 8,30 C -7,38 0,19 0,0 "></path></clipPath><image width="600px" height="600px" clip-path="url(#path_2_3)" xlink:href="https://unsplash.it/600/600?image=1074"></image></svg></div>
+        <div draggable="true" position="15" class="piece">15<svg width="75px" height="75px" viewBox="0 0 98 98"><clipPath id="path_3_3" transform="translate(-23, 22)"><path d="M 0 0 C 19,0 38,8 30,-7 C 19,-22 56,-22 45,-7 C 37,8 56,0 75,0 L 75,75 L 0,75 C 0,56 -7,37 8,45 C 23,56 23,19 8,30 C -7,38 0,19 0,0 "></path></clipPath><image width="600px" height="600px" clip-path="url(#path_3_3)" xlink:href="https://unsplash.it/600/600?image=1074"></image></svg></div>
+    </div-->
+
+    <script>
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text ", ev.target.id);
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            var data = ev.dataTransfer.getData("text ");
+            // ev.target.appendChild(document.getElementById(data));
+            this.appendChild(document.getElementById(data));
+        }
+
+        function grabbable() {
+            // (B) MAKE ITEMS DRAGGABLE + SORTABLE
+            // methodes drag & drop
+
+            var items = document.querySelectorAll("#puzzle li");
+            var current = null; // élément déplacé
+            for (let i of items) {
+
+                // (B2) DRAG START - Début déplacement
+                i.addEventListener("dragstart", function(ev) {
+                    current = this;
+                    for (let it of items) {
+                        it.classList.add(it != current ? "hint" : "drag")
+                    }
+                });
+
+                // (B3) DRAG ENTER - Début survol
+                i.addEventListener("dragenter", function(ev) {
+                    if (this != current) {
+                        this.classList.add("active");
+                    }
+                });
+
+                // (B4) DRAG LEAVE - Termine survol
+                i.addEventListener("dragleave", function() {
+                    this.classList.remove("active");
+                });
+
+                // (B5) DRAG END - REMOVE ALL HIGHLIGHTS
+                i.addEventListener("dragend", function() {
+                    for (let it of items) {
+                        it.classList.remove("hint");
+                        it.classList.remove("drag");
+                        it.classList.remove("active");
+                    }
+                });
+
+                // (B6) DRAG OVER - PREVENT THE DEFAULT "DROP", SO WE CAN DO OUR OWN
+                i.addEventListener("dragover", function(evt) {
+                    evt.preventDefault();
+                });
+
+                // (B7) ON DROP - DO SOMETHING  (current)
+                i.addEventListener("drop", function(evt) {
+                    evt.preventDefault();
+                    if (this != current) {
+                        const currentSibling = current.nextSibling === this ? current : current.nextSibling;
+                        //const currentPosition = current.getAttribute("position");
+                        // Move `current` to before the `this`
+                        this.parentNode.insertBefore(current, this);
+                        // current.setAttribute("position", this.getAttribute("position"));
+                        // Move `this` to before the sibling of `current`
+                        this.parentNode.insertBefore(this, currentSibling);
+                        // this.setAttribute("position", currentPosition);
+
+                        items = document.querySelectorAll("#puzzle li");
+
+                        if (estReussi()) {
+                            // document.querySelector('.console_wrapper').style.display = "none";
+                            document.querySelector('#results').style.display = "block";
+                            document.querySelector('#modele').style.display = "none";
+                            document.body.style.backgroundColor = "green";
+                        }
+                    }
+                });
+            }
+        }
+
+
+        document.addEventListener("DOMContentLoaded", function() {
+            // grabbable()
+        });
+    </script>
+
+</body>
+
+</html>

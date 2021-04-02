@@ -1,0 +1,111 @@
+/* (X) DOES NOT MATTER */
+
+
+/* html, */
+
+body {
+    font-family: arial, sans-serif;
+    background-color: black;
+}
+
+
+/* (A) LIST STYLES */
+
+
+/* height: 50vh; /* 50% of Viewport height */
+
+
+/* width:  75vw; /* 75% of Viewport width */
+
+#puzzle {
+    display: grid;
+    grid-template-columns: repeat(4, 90px);
+    grid-template-rows: repeat(4, 90px);
+    background: greenyellow;
+    /* pad: 1px; */
+}
+
+
+/* #puzzle {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-wrap: wrap;
+    flex-wrap: wrap;
+    border: 2px red;
+    display: inline-block;
+    margin: 10px;
+    padding: 0;
+    border-width: 2px;
+    border-color: green;
+} */
+
+#ghostbucket {
+    /* transform: translate(-50px, -50px); */
+}
+
+
+/* le ghost s'affiche sans clip-path si div non visible*/
+
+
+/* #divmodele {    
+    position: relative;
+    top: -100px;
+    z-index: 2;
+} */
+
+
+/* #puzzle div {
+    grid-column: span 1;
+    grid-row: span 1;
+} */
+
+.piece {
+    display: inline-block;
+    cursor: grab;
+}
+
+
+/* (B) DRAG-AND-DROP HINT */
+
+.drag svg image {
+    border: 1px solid #d4d4d4;
+    background: repeating-linear-gradient( -45deg, #fff, #fff 4px, #d4d4d4 4px, #d4d4d4 5px);
+}
+
+
+/* .hint {
+    background: rgb(12, 236, 49);
+} */
+
+.active svg image {
+    /* cellule survolée */
+    background: #ffd4d4;
+    opacity: 0.5;
+}
+
+
+/* .Xpiece:before {
+    content: "";
+    position: absolute;
+    width: 100px;
+    height: 133.333px;
+    background-image: url("https://unsplash.it/600/600?image=1074");
+    background-position: 0px 0px;
+    background-size: 400%;
+    transform: translate(11px);
+    clip-path: polygon(15% 0, 100% 0%, 100% 40%, 85% 35%, 85% 65%, 100% 60%, 100% 100%, 15% 100%, 15% 60%, 0 65%, 0% 35%, 15% 40%);
+} */
+
+#modele {
+    width: 300px;
+    clip-path: url(#formepiece);
+}
+
+#results {
+    display: none;
+    background-color: rgb(206, 247, 27);
+}
+
+#choix {
+    background-color: rgb(206, 247, 27);
+}

@@ -26,6 +26,7 @@ rconnaissance image ia
 var imagedebug = 'https://unsplash.it/600/600?image=598' // 1074 : lion
 
 var gridSize = 4,
+    styleSheet,
     images, imgWidth, imgHeight,
     imagePuzzle, modele, puzzle, xyshape = [],
     puzzleHeight = 300,
@@ -35,14 +36,35 @@ var gridSize = 4,
     zIndex = 0;
 
 
-async function chargerImage() {
+
+async function catalogueImage() {
+
+    //style 
+    if (styleSheet !== 'undefined') {
+        styleSheet = document.createElement('style');
+        styleSheet.type = 'text/css';
+        document.head.appendChild(styleSheet);
+    }
+    // styleSheet.sheet.insertRule("#puzzle li {  background-color: yellow; }", styleSheet.length);
+    // - regrouper dans une seule définition #puzzle li
+
+
+    /*
+    #puzzle li {    display: inline-block;    float: left;    cursor: grab;  background-color: red;  }
+    */
+
+
     document.querySelectorAll(".taille").forEach(elem => elem.addEventListener("change", changerNiveau));
     document.querySelector("#changer").addEventListener("click", chargerImage);
     document.querySelector("#recharger").addEventListener("click", rechargerPage);
-    images = ['http://source.unsplash.com/random'];
-    //let i = (Math.floor((Math.random() * (images.length - 1)) + 0.5));
-    let i = 0;
-    imagePuzzle = images[i]; // random image
+    images = ['http://source.unsplash.com/random/150x150', 'http://source.unsplash.com/random/300x400'];
+
+    chargerImage();
+}
+
+async function chargerImage() {
+    imagePuzzle = images[(Math.floor((Math.random() * 2) + 0.5))]; // random image
+
 
     modele = document.querySelector("#modele");
     await _loadImage(imagePuzzle, modele);
@@ -127,6 +149,11 @@ function slice() {
             puzzle.appendChild(piece);
         }
     }
+    //todo 
+    // - deleterule si existe deja
+    // - regrouper dans une seule définition #puzzle li
+    // styleSheet.sheet.insertRule('#puzzle li {  background-image: url(' + imagePuzzle + '); }', styleSheet.length);
+
 }
 
 function shuffle() {

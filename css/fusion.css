@@ -14,7 +14,10 @@ body {
 
 .piece {
     display: inline-block;
-    cursor: grab;
+    margin: 10px;
+    padding: 0;
+    border-width: 2px;
+    border-color: green;
 }
 
 .gbordure {

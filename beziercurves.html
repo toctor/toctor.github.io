@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- https://codepen.io/chriscoyier/pen/BObqoy?editors=1100 -->
+
+<head>
+    <title>
+        bezier curv
+    </title>
+
+    <style>
+        .piece {
+            content: "";
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background-image: url("https://unsplash.it/600/600?image=1074");
+            background-position: 0px 0px;
+            background-size: 100%;
+            transform: translate(11px);
+            clip-path: polygon(15% 0, 100% 0%, 100% 40%, 85% 35%, 85% 65%, 100% 60%, 100% 100%, 15% 100%, 15% 60%, 0 65%, 0% 35%, 15% 40%);
+            clip-path:
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <svg viewBox="0 0 100 100">
+        <defs>
+            <clipPath id="puzzleClipPath" clipPathUnits="objectBoundingBox">
+                <path d="M0 0.7763157894736841H0.23684210526315788C0.3289473684210526 0.7763157894736841 0.35526315789473684 0.7236842105263157 0.2894736842105263 0.6578947368421053 0.22368421052631576 0.5921052631578947 0.3157894736842105 0.5526315789473684 0.39473684210526316 0.5526315789473684 0.47368421052631576 0.5526315789473684 0.5657894736842105 0.5921052631578947 0.5 0.6578947368421053 0.43421052631578944 0.7236842105263157 0.4605263157894737 0.7763157894736841 0.5526315789473684 0.7763157894736841H0.7763157894736842V0.5526315789473684C0.7763157894736842 0.4605263157894737 0.8289473684210525 0.4342105263157894 0.894736842105263 0.5 0.9605263157894737 0.5657894736842106 1 0.4736842105263157 1 0.39473684210526305 1 0.3157894736842106 0.9605263157894737 0.2236842105263157 0.894736842105263 0.2894736842105263 0.8289473684210525 0.3552631578947367 0.7763157894736842 0.32894736842105265 0.7763157894736842 0.23684210526315796V0H0V0.7763157894736841Z"></path>
+            </clipPath>
+            <clipPath id="bingoClipPath" clipPathUnits="objectBoundingBox">
+                <path d="M0 0"/>
+                <circle cx="10" cy="10" r="40" fill="red"/>
+            </clipPath>
+        </defs>
+        <image width="100" height="100" xlink:href="https://unsplash.it/300/300?image=1074" Xclip-path="puzzleClipPath" />
+    </svg>
+
+    <div class="piece">
+
+    </div>
+    <script>
+        // document.addEventListener("DOMContentLoaded", function() {
+        //     let newSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        //     newSvg.setAttribute("width", "500");
+        //     newSvg.setAttribute("height", "350");
+
+        //     let newImage = document.createElementNS("http://www.w3.org/2000/svg", "image");
+        //     newImage.setAttribute("width", "300");
+        //     newImage.setAttribute("height", "300");
+        //     newImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', 'https://unsplash.it/300/300?image=1074');
+        //     newImage.setAttribute("clip-path", "url(#myCircle)");
+
+        //     newSvg.appendChild(newImage);
+        //     document.getElementById("dynamicSvgDiv").appendChild(newSvg);
+        // });
+    </script>
+
+</body>
+
+</html>
