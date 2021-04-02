@@ -3,43 +3,47 @@
 
 <head>
     <title>
-        Drag-and-drop Sortable List Demo
+        my lab
     </title>
-
-    <link rel="stylesheet" href="css/fusion.css" />
-    <script src="js/fusion.js"></script>
+    <style>
+        body {
+            font-family: arial, sans-serif;
+            background-color: black;
+        }
+        
+        div {
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        div a {
+            /* display: inline-block; */
+            display: table-cell;
+            color: rgb(56, 168, 168);
+            background: #fff3e0;
+            height: 100px;
+            width: 100px;
+            margin: 5px;
+            border-radius: 50px;
+            text-align: center;
+            vertical-align: middle;
+        }
+    </style>
 </head>
 
 <body>
-    <div id="puzzle" class="puzzlegrid"></div>
 
     <div>
-        <div id="divmodele">
-            <img id="modele" alt="Puzzle full image">
-        </div>
-        <div id="ghostbucket" style="margin: 10px;"></div>
+        <hr>
+        <a href="index3.html">puzzle v3</a>
+        <hr>
+        <a href="index2.html">puzzle v2</a>
+        <a href="pieceimg.html">pieceimg</a>
+        <a href="beziercurves.html">beziercurves</a>
+        <hr>
     </div>
 
-    <div id="choix">
-        <input class="taille" type="radio" name="level" value="3">Facile
-        <input class="taille" type="radio" name="level" value="4">Normal
-        <input class="taille" type="radio" name="level" value="6">Difficile
-        <button id="changer">Changer d'image</button>
-        <input type="file" onchange="previewFile()">
-    </div>
-
-    <div id="results">
-        <h4>Bravo!</h4>
-        <button id="recharger">Rejouer</button>
-    </div>
-    <svg id="svgmodele">
-        <filter id="pieceBorderFilter">
-            <feMorphology operator="dilate" in="SourceGraphic" radius="1"/>
-        </filter>
-        <defs>
-            <image id="imgmodele" xlink:href=""></image>
-        </defs>
-    </svg>
 </body>
 
 </html>
