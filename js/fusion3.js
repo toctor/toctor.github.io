@@ -149,17 +149,10 @@ function slice() {
     }
 }
 
-function shuffle1() {
-    do {
-        for (let i = puzzle.children.length; i >= 0; i--) {
-            puzzle.appendChild(puzzle.children[Math.random() * i | 0]);
-        }
-    } while (success())
-}
-
 function shuffle() {
     do {
-        for (let i = puzzle.children.length; i >= 0; i--) {
+        for (let i = puzzle.children.length; i > 0; i--) {
+            // puzzle.appendChild(puzzle.children[Math.random() * i | 0]);
             puzzle.appendChild(tapis.children[i - 1]);
             tapis.appendChild(puzzle.children[Math.random() * i | 0]);
         }
