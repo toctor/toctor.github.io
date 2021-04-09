@@ -1,44 +1,201 @@
-/* @todo
-
-enregister avancement pour reprendre plus tard
-
-ajuster luminosité tapis, puzzle (pour image trop sombre)
-
-ghost non transparent (opacity 1 ko)
-
-modele masquable
-hint : passer par dessus modele pou visualiser  emplacement cible 
-
-animation fin puzzle (fex artifice, cube 3d, ...)
-
-
-
-compteur hint
-puzzle & modele zoomable
-timer
-    
-
-menu, 
-Ecran config
-
----3---
-voice command
-chatbot
-rconnaissance image ia
-
-*/
 var imagedebug = 'https://unsplash.it/600/600?image=598' // 1074 : lion
-
+const marge = 10;
 var gridSize = 4,
     images, imgWidth, imgHeight,
-    imagePuzzle, modele, puzzle, xyshape = [],
+    imagePuzzle, modele, xyshape = [],
     tapis,
     puzzleHeight = 300,
     puzzleWidth = 300, // @todo : ajust with screen size
     pWidth, pHeight,
     pWidth10, pHeight10,
-    draggedPiece, zIndex = 0;
+    svgWidth, svgHeight,
+    draggedPiece, zIndex = 0,
+    offset = { x: 0, y: 0 },
+    emplacement;
+// avoisins = [];
+/*
+tableau avec données numérique stocké en string ?
+get dom agregat null
+piece agregé à retirer des voisins des autres pièces du même agrégat
+*/
 
+class Emplacement {
+    constructor(xMax, yMax) {
+        this.emplacement = [];
+
+        for (let y = 0; y < yMax; y++) {
+            for (let x = 0; x < xMax; x++) {
+                // position
+                let position = y * yMax + x;
+
+                //voisins
+                let voisins = [];
+                if (x > 0) voisins.push(position - 1); // left neighbour
+                if (x < xMax - 1) voisins.push(position + 1); // right neighbour
+                if (y > 0) voisins.push((y - 1) * yMax + x); // top neighbour
+                if (y < yMax - 1) voisins.push((y + 1) * yMax + x); // bottom neighbour
+
+                this.emplacement.push({
+                    voisins: voisins, // no pieces voisines du puzzle figé
+                    agregatNo: position, // no de l'agrégat contenant draggedPiece (l'agregat conserve le no de la première pièce)
+                    agregatLeftNo: position,
+                    agregatTopNo: position,
+                    agregatRightNo: position,
+                    agregatBottomNo: position
+                });
+            }
+        }
+    }
+
+    agregerVoisinsProches(draggedPiece) {
+        // cherche piece voisine à proximité à agréger (et qui n'est pas déjà dans l'agrégat déplacé)
+        let draggedPieceNo = draggedPiece.getAttribute("position");
+        if (!draggedPieceNo) return false;
+        let isAgregated = false
+        this.emplacement[draggedPieceNo].voisins.forEach(voisinNo => {
+
+            isAgregated = this.distance(draggedPiece, draggedPieceNo, voisinNo) || isAgregated
+        });
+        return isAgregated;
+    }
+
+    distance(draggedPiece, draggedPieceNo, voisinNo) {
+
+        let agregatNo = voisinNo
+        while (agregatNo != this.emplacement[agregatNo].agregatNo) {
+            agregatNo = this.emplacement[agregatNo].agregatNo // biggest & latest agregat containing voisinNo
+        }
+        if (draggedPieceNo == agregatNo) return false;
+
+        let agregat = document.querySelector('svg[position="' + agregatNo + '"]')
+
+        // Trouver dans draggedPiece la pièce qui voisinNo pour voisin
+        let pieceInDraggedNo = draggedPieceNo
+        this.emplacement.forEach((pieceNoTab, pieceNo, tableau) => {
+            if (pieceNoTab.agregatNo == draggedPieceNo && tableau[pieceNo].voisins.indexOf(voisinNo) >= 0) {
+                pieceInDraggedNo = pieceNo;
+            }
+        })
+
+        let voisinNoX = voisinNo % gridSize,
+            voisinNoY = Math.floor(voisinNo / gridSize);
+
+        let voisinLeft = numLeft(agregat) + pWidth * (voisinNoX - this.emplacement[agregatNo].agregatLeftNo % gridSize),
+            voisinTop = numTop(agregat) + pHeight * (voisinNoY - Math.floor(this.emplacement[agregatNo].agregatTopNo / gridSize));
+
+        let dragX = pieceInDraggedNo % gridSize,
+            dragY = Math.floor(pieceInDraggedNo / gridSize);
+
+        let dragLeft = numLeft(draggedPiece) + pWidth * (dragX - this.emplacement[draggedPieceNo].agregatLeftNo % gridSize + (dragX == voisinNoX ? 0 : (dragX > voisinNoX ? -1 : 1))),
+            dragTop = numTop(draggedPiece) + pHeight * (dragY - Math.floor(this.emplacement[draggedPieceNo].agregatTopNo / gridSize) + (dragY == voisinNoY ? 0 : (dragY > voisinNoY ? -1 : 1)));
+
+        if (Math.abs(voisinLeft - dragLeft) < marge && Math.abs(voisinTop - dragTop) < marge) {
+            //test draggedPieceNo ne vient pas d'être ajouté dans this.emplacement[agregatNo].voisins (proche de 2 voisins du même agrégat)
+            if (this.emplacement[agregatNo].voisins.indexOf(pieceInDraggedNo) >= 0) {
+                this.agreger(draggedPiece, draggedPieceNo, agregat, agregatNo)
+            }
+            return true
+        }
+        return false
+    }
+
+    agreger(draggedPiece, draggedPieceNo, agregat, agregatNo) {
+        // regrouper les d= dans le path du voisin     // @todo : éliminer les parcours internes, cas draggedPiece est un agrégat
+        agregat.firstChild.firstChild.setAttribute("d", agregat.firstChild.firstChild.getAttribute("d") + draggedPiece.firstChild.firstChild.getAttribute("d"))
+
+        // resize agregat 
+        let viewbox = agregat.getAttribute("viewBox").split(" "),
+            viewboxIsUpdate = false,
+            deltaWidth = 0,
+            deltaHeight = 0;
+
+        let agregatLeftX = this.emplacement[agregatNo].agregatLeftNo % gridSize,
+            agregatTopY = Math.floor(this.emplacement[agregatNo].agregatTopNo / gridSize),
+            agregatRightX = this.emplacement[agregatNo].agregatRightNo % gridSize,
+            agregatBottomY = Math.floor(this.emplacement[agregatNo].agregatBottomNo / gridSize),
+            draggedPieceLeftNo = this.emplacement[draggedPieceNo].agregatLeftNo,
+            draggedPieceTopNo = this.emplacement[draggedPieceNo].agregatTopNo,
+            draggedPieceRightNo = this.emplacement[draggedPieceNo].agregatRightNo,
+            draggedPieceBottomNo = this.emplacement[draggedPieceNo].agregatBottomNo,
+            draggedPieceTopY = Math.floor(draggedPieceTopNo / gridSize),
+            draggedPieceLeftX = draggedPieceLeftNo % gridSize,
+            draggedPieceBottomY = Math.floor(draggedPieceBottomNo / gridSize),
+            draggedPieceRightX = draggedPieceRightNo % gridSize
+
+        if (draggedPieceLeftX < agregatLeftX) {
+            this.emplacement[agregatNo].agregatLeftNo = draggedPieceLeftNo
+            deltaWidth = agregatLeftX - draggedPieceLeftX;
+            agregat.style.left = (numLeft(agregat) - pWidth * deltaWidth) + "px";
+            agregat.setAttribute("width", (parseInt(agregat.getAttribute("width"), 10) + pWidth * deltaWidth) + "px")
+            viewbox[0] = parseInt(viewbox[0]) - pWidth * deltaWidth;
+            viewbox[2] = parseInt(viewbox[2]) + pWidth * deltaWidth;
+            viewboxIsUpdate = true
+        }
+
+        if (draggedPieceRightX > agregatRightX) {
+            this.emplacement[agregatNo].agregatRightNo = draggedPieceRightNo
+            deltaWidth = draggedPieceRightX - agregatRightX
+            agregat.setAttribute("width", (parseInt(agregat.getAttribute("width"), 10) + pWidth * deltaWidth) + "px")
+            viewbox[2] = parseInt(viewbox[2]) + pWidth * deltaWidth;
+            viewboxIsUpdate = true
+        }
+
+        if (draggedPieceTopY < agregatTopY) {
+            this.emplacement[agregatNo].agregatTopNo = draggedPieceTopNo
+            deltaHeight = agregatTopY - draggedPieceTopY
+            agregat.style.top = (numTop(agregat) - pHeight * deltaHeight) + "px";
+            agregat.setAttribute("height", (parseInt(agregat.getAttribute("height"), 10) + pHeight * deltaHeight) + "px")
+            viewbox[1] = parseInt(viewbox[1]) - pHeight * deltaHeight;
+            viewbox[3] = parseInt(viewbox[3]) + pHeight * deltaHeight;
+            viewboxIsUpdate = true
+        }
+
+        if (draggedPieceBottomY > agregatBottomY) {
+            this.emplacement[agregatNo].agregatBottomNo = draggedPieceBottomNo
+            deltaHeight = draggedPieceBottomY - agregatBottomY
+            agregat.setAttribute("height", (parseInt(agregat.getAttribute("height"), 10) + pHeight * deltaHeight) + "px")
+            viewbox[3] = parseInt(viewbox[3]) + pHeight * deltaHeight;
+            viewboxIsUpdate = true
+        }
+        if (viewboxIsUpdate) {
+            agregat.setAttribute("viewBox", viewbox.join(" "))
+        }
+
+        //  maj draggedPiece & collecte pièces de agregatNo
+        let voisins = [];
+        let inAgregat = [];
+        this.emplacement.forEach((pieceNoTab, pieceNo) => {
+            if (pieceNoTab.agregatNo == agregatNo || pieceNoTab.agregatNo == draggedPieceNo) {
+                if (pieceNoTab.agregatNo == draggedPieceNo) {
+                    pieceNoTab.agregatNo = agregatNo; // maj rattachement à l'agrégat rejoint
+                }
+                voisins = voisins.concat(pieceNoTab.voisins); // collecte voisins de toutes les pièces de draggedPieceNo et agregatNo
+                inAgregat = inAgregat.concat(pieceNo); // collecte pièces de draggedPieceNo et agregatNo
+            }
+        });
+
+        // déplacer les voisins de TOUTES LES PIECES de draggedPiece dans agregat s'il n'y sont pas déjà en tant que voisin OU PIECE AGREGEE
+        let voisinsUpdate = [];
+        voisins.forEach(voisinNo => {
+            if (voisinsUpdate.indexOf(voisinNo) < 0 && inAgregat.indexOf(voisinNo) < 0) {
+                voisinsUpdate.push(voisinNo);
+            }
+        })
+        this.emplacement[agregatNo].voisins = voisinsUpdate;
+
+        // retirer draggedPieceNo et autre pièces qui constituent l'agrégat
+        //this.emplacement[agregatNo].voisins = this.emplacement[agregatNo].voisins.filter(voisinNo => { return voisinNo !== draggedPieceNo })
+        // this change à l'intérieur de la fonction foreach
+        this.emplacement.forEach((pieceNoTab, pieceNo, tableau) => {
+            if (pieceNoTab.agregatNo == agregatNo) {
+                tableau[agregatNo].voisins =
+                    tableau[agregatNo].voisins.filter(voisinNo => {
+                        return voisinNo !== pieceNo
+                    })
+            }
+        })
+    }
+}
 
 async function chargerImage() {
     document.querySelectorAll(".taille").forEach(elem => elem.addEventListener("change", changerNiveau));
@@ -72,24 +229,16 @@ async function chargerPuzzle() {
     imgWidth = modele.naturalWidth;
     imgHeight = modele.naturalHeight;
     //vidage pour rejeu
-    puzzle = document.querySelector("#puzzle");
-    while (puzzle.firstChild) {
-        puzzle.removeChild(puzzle.firstChild);
-    }
-
     tapis = document.querySelector('#tapis');
     while (tapis.firstChild) {
         tapis.removeChild(tapis.firstChild);
     }
-    document.querySelector('#tapis').style.display = "grid";
-    document.querySelector('#modele').style.display = "block";
-
+    // document.querySelector('#tapis').style.display = "grid";
+    // document.querySelector('#modele').style.display = "block";
 
     slice();
 
-    grabbable();
-
-    shuffle()
+    // shuffle()
 
 }
 
@@ -101,7 +250,6 @@ function slice() {
         puzzleHeight = Math.floor(puzzleWidth * imgHeight / imgWidth)
     }
 
-
     pWidth = Math.floor(puzzleWidth / gridSize);
     pHeight = Math.floor(puzzleHeight / gridSize);
     pWidth10 = Math.floor(pWidth / 10)
@@ -110,20 +258,14 @@ function slice() {
     let xMax = gridSize;
     let yMax = gridSize;
 
+    svgWidth = pWidth + pWidth10 * 4;
+    svgHeight = pHeight + pHeight10 * 4;
+
+    tapis.style.width = (xMax * svgWidth) + 'px';
+    tapis.style.height = (yMax * svgHeight) + 'px';
+
     puzzleWidth = xMax * pWidth
     puzzleHeight = yMax * pHeight
-    puzzle.style.width = (puzzleWidth + pWidth10 * 4) + 'px';
-    puzzle.style.height = (puzzleHeight + pHeight10 * 4) + 'px';
-
-    for (let i = document.styleSheets[0].cssRules.length - 1; i >= 0; i--) {
-        let stylei = document.styleSheets[0].cssRules[i].selectorText;
-        if (stylei == ".puzzlegrid" || stylei == ".tapisgrid" || stylei == ".gbordure") {
-            document.styleSheets[0].deleteRule(i);
-        }
-    }
-    document.styleSheets[0].insertRule(".puzzlegrid {display: grid; grid-template-columns: repeat(" + xMax + ", " + pWidth + "px);  grid-template-rows: repeat(" + yMax + ", " + pHeight + "px);}");
-    document.styleSheets[0].insertRule(".tapisgrid  {display: grid; grid-template-columns: repeat(" + (xMax) + ", " + (pWidth + pWidth10 * 4) + "px);  grid-template-rows: repeat(" + (yMax) + ", " + (pHeight + pHeight10 * 4) + "px);}");
-    document.styleSheets[0].insertRule('.gbordure  {filter: url("#pieceBorderFilter");}');
 
     document.querySelector('#imgmodele').setAttribute("width", puzzleWidth + "px");
     document.querySelector('#imgmodele').setAttribute("height", puzzleHeight + "px");
@@ -132,40 +274,40 @@ function slice() {
 
     for (let y = 0; y < yMax; y++) {
         for (let x = 0; x < xMax; x++) {
-            let newsvg = createsvgpath(x, y, xMax, yMax);
+            createsvgpath(x, y, xMax, yMax);
 
-            var piece = document.createElement("div");
-            piece.setAttribute('draggable', "true");
-            piece.setAttribute("position", y * yMax + x);
-            piece.className = "piece";
-            piece.appendChild(newsvg);
-
-            puzzle.appendChild(piece);
+            //voisins
+            // avoisins.push([]);
+            // let position = y * yMax + x;
+            // if (x > 0) avoisins[position].push(y * yMax + x - 1); // left neighbour
+            // if (x < xMax - 1) avoisins[position].push(y * yMax + x + 1); // right neighbour
+            // if (y > 0) avoisins[position].push((y - 1) * yMax + x); // top neighbour
+            // if (y < yMax - 1) avoisins[position].push((y + 1) * yMax + x); // bottom neighbour
         }
     }
 
-    for (let y = 0; y < yMax; y++) {
-        for (let x = 0; x < xMax; x++) {
-            tapis.appendChild(document.createElement("div"));
-        }
-    }
+    emplacement = new Emplacement(gridSize, gridSize);
+
+    console.log(emplacement);
 }
 
 function shuffle() {
     do {
-        for (let i = puzzle.children.length; i > 0; i--) {
-            // puzzle.appendChild(puzzle.children[Math.random() * i | 0]);
-            puzzle.appendChild(tapis.children[i - 1]);
-            tapis.appendChild(puzzle.children[Math.random() * i | 0]);
+        for (let i = tapis.children.length; i > 0; i--) {
+            tapis.appendChild(tapis.children[Math.random() * i | 0]);
         }
     } while (success())
+    for (let i = 0; i < tapis.children.length; i++) {
+        tapis.children[i].style.left = ((i % gridSize) * svgWidth + tapis.offsetLeft) + "px"
+        tapis.children[i].style.top = (Math.floor(i / gridSize) * svgHeight + tapis.offsetTop) + "px"
+    }
 }
 
 function createsvgpath(x, y, xMax, yMax) {
-    let top = (y == 0 ? 0 : (xyshape[x][y - 1].bottom)),
+    let left = (x == 0 ? 0 : (xyshape[x - 1][y].right)),
+        top = (y == 0 ? 0 : (xyshape[x][y - 1].bottom)),
         right = (x == xMax - 1 ? 0 : (Math.random() < 0.5 ? 1 : -1)),
-        bottom = (y == yMax - 1 ? 0 : (Math.random() < 0.5 ? 1 : -1)),
-        left = (x == 0 ? 0 : (xyshape[x - 1][y].right));
+        bottom = (y == yMax - 1 ? 0 : (Math.random() < 0.5 ? 1 : -1));
 
     if (xyshape.length == 0) {
         for (var i = 0; i < xMax; i++) {
@@ -178,6 +320,21 @@ function createsvgpath(x, y, xMax, yMax) {
     };
 
     let shapeid = "path_" + x + "_" + y; //@todo test si shape existe déjà
+
+    let xPosition = x * pWidth // + pWidth10 * (left ? 2 : 0)
+    let yPosition = y * pHeight // + pHeight10 * (top ? 2 : 0)
+    let shapepath = "M " + (xPosition + 0.5) + " " + (yPosition + 0.5) + " " + beziercurve(top, right, bottom, left);
+
+    let newPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    newPath.setAttribute("d", shapepath);
+
+    let newClipPath = document.createElementNS("http://www.w3.org/2000/svg", "clipPath");
+    newClipPath.setAttribute("id", shapeid);
+    newClipPath.appendChild(newPath);
+
+    // insérer dans svgmodele
+    // document.querySelector('#svgmodele').lastElementChild.appendChild(newClipPath);
+
 
     let newRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
     newRect.setAttribute("clip-path", "url(#" + shapeid + ")");
@@ -193,31 +350,32 @@ function createsvgpath(x, y, xMax, yMax) {
     // newImage.setAttribute("width", puzzleWidth + "px");
     // newImage.setAttribute("height", puzzleHeight + "px");
     newImage.setAttribute("clip-path", "url(#" + shapeid + ")");
-    // newImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', imagePuzzle);
-    newImage.setAttribute('href', imagePuzzle);
+    newImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', imagePuzzle);
 
-    let xPosition = x * pWidth // + pWidth10 * (left ? 2 : 0)
-    let yPosition = y * pHeight // + pHeight10 * (top ? 2 : 0)
-
-    let shapepath = "M " + (xPosition + 0.5) + " " + (yPosition + 0.5) + " " + beziercurve(top, right, bottom, left);
-
-    let newPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    newPath.setAttribute("d", shapepath);
-
-    let newClipPath = document.createElementNS("http://www.w3.org/2000/svg", "clipPath");
-    newClipPath.setAttribute("id", shapeid);
-    newClipPath.appendChild(newPath);
 
     let newSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    newSvg.setAttribute("width", pWidth + pWidth10 * 4 + "px");
-    newSvg.setAttribute("height", pHeight + pHeight10 * 4 + "px");
-    newSvg.setAttribute("id", "svg" + (y * yMax + x));
-    newSvg.setAttribute("viewBox", (xPosition - pWidth10 * 2) + " " + (yPosition - pHeight10 * 2) + " " + (1 + pWidth + pWidth10 * 4) + " " + (1 + pHeight + pHeight10 * 4));
+    newSvg.setAttribute("width", svgWidth + "px");
+    newSvg.setAttribute("height", svgHeight + "px");
+    newSvg.setAttribute("viewBox", (xPosition - pWidth10 * 2) + " " + (yPosition - pHeight10 * 2) + " " + (1 + svgWidth) + " " + (1 + svgHeight));
+
+    // newSvg.setAttribute("id", "svg" + (y * yMax + x));
+    newSvg.setAttribute("position", y * yMax + x);
+    // newSvg.setAttribute("x", x);
+    // newSvg.setAttribute("y", y);
+    newSvg.style.left = (x * svgWidth + tapis.offsetLeft) + "px"
+    newSvg.style.top = (y * svgHeight + tapis.offsetTop) + "px"
     newSvg.appendChild(newClipPath);
-    // newSvg.appendChild(newFilter);
+
     newSvg.appendChild(newG);
     newSvg.appendChild(newImage);
-    return newSvg;
+
+    //grabbable
+    newSvg.addEventListener('mousedown', startDrag);
+    newSvg.addEventListener('mousemove', drag);
+    newSvg.addEventListener('mouseup', endDragDrop); // drop 
+    newSvg.addEventListener('mouseleave', endDrag);
+
+    tapis.appendChild(newSvg);
 }
 
 function beziercurve(top, right, bottom, left) {
@@ -256,67 +414,65 @@ function trsl(x, y, c, r, adjust = 0) {
     return (r == 180 ? -X : X) + "," + (r == 270 ? -Y : Y) + " "; // x négatif si 180°, y négatif si 270°
 }
 
-function grabbable() {
-    draggedPiece = null; // élément déplacé
-    for (let i of document.querySelectorAll("#puzzle div")) {
+function startDrag(evt) {
+    //  https://www.petercollingridge.co.uk/tutorials/svg/interactive/dragging/       
+    draggedPiece = evt.target.parentNode; // svg de Use
+    console.log("startDrag draggedPiece:" + draggedPiece)
+    draggedPiece.style.zIndex = zIndex++;
 
-        i.addEventListener("dragstart", function(ev) {
-            draggedPiece = this;
-            draggedPiece.classList.add("drag");
+    let x = numLeft(draggedPiece)
+    let y = numTop(draggedPiece)
+    offset.x = evt.screenX - x
+    offset.y = evt.screenY - y
+}
 
-            // set custom Ghost 
-            //var ghost = document.querySelector("#svg" + draggedPiece.getAttribute("position")).cloneNode(true);
-            var nopiece = draggedPiece.getAttribute("position");
+function numLeft(elem) {
+    return parseInt(elem.style.left, 10);
+}
 
-            var ghost = document.querySelector("#ghost" + nopiece)
-            if (!ghost) {
-                ghost = document.querySelector("#svg" + nopiece).cloneNode(true);
-                ghost.setAttribute("id", "ghost" + nopiece);
-                document.querySelector("#ghostbucket").appendChild(ghost);
-            }
-            ev.dataTransfer.setDragImage(ghost, Math.floor(pWidth / 2), Math.floor(pHeight / 2));
-        });
+function numTop(elem) {
+    return parseInt(elem.style.top, 10);
+}
 
-        // (B3) DRAG ENTER - Début survol
-        i.addEventListener("dragenter", function(ev) {
-            if (this != draggedPiece) { this.classList.add("active"); }
-        });
+function addViewbox(elem1, elem2, widthOrHeight) {
+    let iaxe = (widthOrHeight == "width" ? 2 : 3)
+    let aViewBox = elem1.getAttribute("viewBox").split(" ")
+    aViewBox[iaxe] = parseInt(aViewBox[iaxe]) + parseInt(elem2.getAttribute("viewBox").split(" ")[iaxe])
+    return aViewBox.join(" ")
+}
 
-        // (B4) DRAG LEAVE - Termine survol
-        i.addEventListener("dragleave", function() {
-            this.classList.remove("active");
-        });
+function drag(evt) {
+    if (draggedPiece) {
+        //console.log("drag evt.target:" + evt.target)
+        evt.preventDefault();
 
-        // (B5) DRAG END - REMOVE ALL HIGHLIGHTS
-        i.addEventListener("dragend", function() {
-            for (let it of document.querySelectorAll("#puzzle div")) {
-                // it.classList.remove("hint");
-                it.classList.remove("drag");
-                it.classList.remove("active");
-            }
-            // while (document.querySelector("#ghostbucket").firstChild) {
-            //     document.querySelector("#ghostbucket").removeChild(document.querySelector("#ghostbucket").firstChild);
-            // }
-        });
+        draggedPiece.style.left = (evt.screenX - offset.x) + "px"
+        draggedPiece.style.top = (evt.screenY - offset.y) + "px"
+            // console.log("drag draggedPiece:" + draggedPiece + ", draggedPiece.style:" + draggedPiece.style.left + "," + draggedPiece.style.top)
 
-        // (B6) DRAG OVER - PREVENT THE DEFAULT "DROP", SO WE CAN DO OUR OWN
-        i.addEventListener("dragover", function(evt) {
-            evt.preventDefault();
-        });
-
-        // (B7) ON DROP - DO SOMETHING  (draggedPiece)
-        i.addEventListener("drop", drop);
+        // } else {
+        //     console.log("drag survol autre piece ? evt.target:" + evt.target)
     }
+}
 
-    // tapis
+function endDrag(evt) {
+    if (draggedPiece) {
+        console.log("draggedPiece")
+        draggedPiece = null;
+        // } else {
+        //     console.log("endDrag survol autre piece ? evt.target:" + evt.target)
+    }
+}
 
-    for (let i of document.querySelectorAll("#tapis div")) {
-
-        i.addEventListener("dragover", function(evt) {
-            evt.preventDefault();
-        });
-
-        i.addEventListener("drop", drop);
+function endDragDrop(evt) {
+    if (draggedPiece) {
+        // console.log("endDragDrop evt.target:" + evt.target)
+        // cherche piece voisine à proximité à agréger (et qui n'est pas déjà dans l'agrégat déplacé)
+        if (emplacement.agregerVoisinsProches(draggedPiece)) {
+            draggedPiece.remove()
+        }
+        // todo vérifier succes si tout est agrégé
+        draggedPiece = null;
     }
 }
 
@@ -358,17 +514,7 @@ function drop(evt) {
 }
 
 function success() {
-    if (document.querySelector('#tapis div.piece')) {
-        return false;
-    }
-
-    let puzzleSolved = true;
-    [...puzzle.children].forEach((e, index) => {
-        if (e.getAttribute("position")) {
-            puzzleSolved = (e.getAttribute("position") != index ? false : puzzleSolved);
-        }
-    });
-    return puzzleSolved;
+    return tapis.children.length == 1;
 }
 
 async function changerNiveau() {

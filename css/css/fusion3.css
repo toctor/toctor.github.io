@@ -1,0 +1,42 @@
+/* html, */
+
+body {
+    font-family: arial, sans-serif;
+    background-color: rgb(151, 144, 144);
+}
+
+#gamespace {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+}
+
+#modele {
+    width: 200px;
+}
+
+#svgmodele {
+    display: none;
+}
+
+#tapis {
+    width: 500px;
+}
+
+svg {
+    position: fixed;
+    cursor: grab;
+}
+
+.gbordure {
+    filter: url("#pieceBorderFilter");
+}
+
+#results {
+    display: none;
+    background-color: rgb(206, 247, 27);
+}
+
+#choix {
+    background-color: rgb(206, 247, 27);
+}
