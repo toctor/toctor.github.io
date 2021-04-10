@@ -2,7 +2,7 @@
 
 body {
     font-family: arial, sans-serif;
-    background-color: black;
+    background-color: rgb(151, 144, 144);
 }
 
 #gamespace {
@@ -11,53 +11,33 @@ body {
     flex-direction: row;
 }
 
+#modele {
+    width: 200px;
+}
+
+#svgmodele {
+    display: none;
+}
+
 #tapis {
-    margin-top: 20px;
+    width: 500px;
 }
 
-#tapis div {
-    background: rgb(25, 36, 46);
-}
-
-#puzzle {
-    background: rgb(29, 15, 78);
-    border-color: rgb(30, 20, 83);
-    border: 2px solid rgb(16, 6, 54);
-}
-
-.piece {
-    display: inline-block;
+#tapis svg {
+    position: fixed;
     cursor: grab;
+    /* pointer-events: fill; */
+    /* SVG-only  https://developer.mozilla.org/fr/docs/Web/CSS/pointer-events */
 }
+
+
+/* svg:hover{opacity:.5;}
+.shape00{clip-path: url(#path_0_0);} */
 
 
 /* .gbordure {
     filter: url("#pieceBorderFilter");
 } */
-
-.piece svg image {
-    border: 1px solid red;
-}
-
-.drag svg image {
-    border: 1px solid #d4d4d4;
-    /* background: repeating-linear-gradient( -45deg, #fff, #fff 4px, #d4d4d4 4px, #d4d4d4 5px); */
-}
-
-.active svg image {
-    /* cellule survolée */
-    background: #ffd4d4;
-    opacity: 0.5;
-}
-
-#divmodele {
-    display: block;
-    margin: 50px;
-}
-
-#modele {
-    width: 200px;
-}
 
 #results {
     display: none;
@@ -66,4 +46,5 @@ body {
 
 #choix {
     background-color: rgb(206, 247, 27);
+    height: 3em;
 }

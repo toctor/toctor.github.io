@@ -1,6 +1,6 @@
 var imagedebug = 'https://unsplash.it/600/600?image=598' // 1074 : lion
 const marge = 10;
-var gridSize = 2,
+var gridSize = 4,
     images, imgWidth, imgHeight,
     imagePuzzle, modele, xyshape = [],
     tapis,
@@ -12,7 +12,7 @@ var gridSize = 2,
     draggedPiece, zIndex = 0,
     offset = { x: 0, y: 0 },
     emplacement;
-const pathIsAbsolu = false;
+const pathIsAbsolu = false; // true ko : todo Génération Clip-Path absolu à revoir
 var pathX, pathY; // pour construire forme puzzle 
 /*
 impossible de saisir une pièce libre sur zone vide du rectangle d'un agrégat !!!
@@ -246,7 +246,7 @@ async function chargerPuzzle() {
 
     slice();
 
-    // shuffle()
+    shuffle()
 
 }
 
@@ -476,12 +476,12 @@ function endDragDrop(evt) {
 }
 
 function success(finish = true) {
-    if (tapis.children.length > 0) return false;
+    if (tapis.children.length > 1) return false;
     if (!finish) return true;
 
     document.querySelector('#results').style.display = "block";
     document.querySelector('#modele').style.display = "none";
-    document.querySelector('#tapis').style.display = "none";
+    // document.querySelector('#tapis').style.display = "none";
     document.body.style.backgroundColor = "green";
 
     // for (let i = document.styleSheets[0].cssRules.length - 1; i >= 0; i--) {
@@ -497,8 +497,9 @@ async function changerNiveau() {
     chargerPuzzle();
 }
 
-function rechargerPage() {
-    window.location.reload()
+async function rechargerPage() {
+    // window.reload(true)
+    await chargerImage()
 }
 
 function previewFile() {
