@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>
+    </title>
+    <style>
+        body {
+            font-family: arial, sans-serif;
+            background-color: rgb(83, 81, 81);
+        }
+        /*         
+        #pshape {
+            transform: scale(1 1)
+        }
+         */
+        
+        svg {
+            position: fixed;
+            cursor: grab;
+            xpointer-events: fill;
+        }
+        
+        .gbordure {
+            filter: url("#pieceBorderFilter");
+        }
+        /* svg00 {
+            clip-path: url(#path_0_0);
+        }
+        
+        svg10 {
+            clip-path: url(#path_1_0);
+        } */
+    </style>
+
+</head>
+
+<body>
+    <div id="tapis" style="width: 528px; height: 412px;">
+        <svg clip-path="url(#path_0_0)" width="132px" height="103px" viewBox="-18 -14 133 104" position="0" style="left: 8px; top: 168px;"><use xlink:href="#imgmodele" ></use></svg>
+
+        <svg clip-path="url(#path_1_0)" width="132px" height="103px" viewBox="78 -14 133 104" position="1" style="left: 140px; top: 168px;"><use xlink:href="#imgmodele" ></use></svg>
+
+        <svg clip-path="url(#clipping)" width="132px" height="103px" viewBox="78 -14 133 104" position="1" style="left: 140px; top: 300px;"><use xlink:href="#imgmodele"></use></svg>
+    </div>
+
+    <svg id="svgmodele">
+        <filter id="pieceBorderFilter"><feMorphology operator="dilate" in="SourceGraphic" radius="1"></feMorphology></filter>
+        <defs>
+            <image id="imgmodele" xlink:href="https://unsplash.it/600/600?image=1074"></image>
+            <clipPath id="path_0_0">
+                <path d="M 0.5 0.5 h 96 l 0,21  s 0,14 -9,7  s -9,0 -9,7  l 0,5  s 0,14 9,7  s 9,7 9,7  l 0,21  l -27,0  s -18,0 -9,7  s 0,7 -9,7  l -6,0  s -18,0 -9,-7  s -9,-7 -9,-7  l -27,0 Z"></path>
+            </clipPath>
+            <clipPath id="path_1_0">
+                <path d="M 96.5 0.5 h 96 l 0,21  s 0,14 -9,7  s -9,0 -9,7  l 0,5  s 0,14 9,7  s 9,7 9,7  l 0,21  l -27,0  s -18,0 -9,-7  s 0,-7 -9,-7  l -6,0  s -18,0 -9,7  s -9,7 -9,7  l -27,0  l 0,-21  s 0,-14 -9,-7  s -9,0 -9,-7  l 0,-5  s 0,-14 9,-7  s 9,-7 9,-7  l 0,-21 "></path>
+            </clipPath>
+            <clipPath id="path_1_0b">
+                <path d="M100.5,0.5H96.5L96.5,21.5S96.5,35.5,87.5,28.5S78.5,28.5,78.5,35.5L78.5,40.5S78.5,54.5,87.5,47.5S96.5,54.5,96.5,54.5L96.5,75.5L69.5,75.5S51.5,75.5,60.5,68.5S60.5,61.5,51.5,61.5L45.5,61.5S27.5,61.5,36.5,68.5S27.5,75.5,27.5,75.5L0.5,75.5L0.5,54.5S0.5,40.5,-8.5,47.5S-17.5,47.5,-17.5,40.5L-17.5,35.5S-17.5,21.5,-8.5,28.5S0.5,21.5,0.5,21.5L0.5,0.5"></path>
+            </clipPath>
+            <clipPath id="clipping">
+                <circle cx="50" cy="50" r="40" />
+                <rect x="50" y="50" width="20" height="20" />
+            </clipPath>
+        </defs>
+    </svg>
+
+
+
+
+</body>
+
+</html>

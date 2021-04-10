@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>
+        Drag-and-drop Sortable List Demo
+    </title>
+
+    <link rel="stylesheet" href="css/fusion4.css" />
+    <script src="js/fusion4.js"></script>
+</head>
+
+<body>
+    <svg id="svgmodele">
+        <filter id="pieceBorderFilter">
+            <feMorphology operator="dilate" in="SourceGraphic" radius="1"/>
+        </filter>
+        <defs>
+            <image id="imgmodele" xlink:href=""></image>
+        </defs>
+    </svg>
+    <div id="gamespace">
+        <div><img id="modele" alt="full image"></div>
+        <div id="tapis"></div>
+        <div id="choix">
+            <input class="taille" type="radio" name="level" value="3">Facile (3x3)
+            <input class="taille" type="radio" name="level" value="4" checked="checked">Normal (4x4)
+            <input class="taille" type="radio" name="level" value="6">Difficile (6x6)
+            <form>
+                <button id="changer">Changer d'image</button>
+                <input type="file" onchange="previewFile()">
+            </form>
+        </div>
+
+        <div id="results">
+            <h4>Bravo!</h4>
+            <button id="recharger">Rejouer</button>
+        </div>
+    </div>
+
+
+
+
+</body>
+
+</html>
