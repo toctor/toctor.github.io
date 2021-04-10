@@ -1,6 +1,6 @@
 var imagedebug = 'https://unsplash.it/600/600?image=598' // 1074 : lion
 const marge = 10;
-var gridSize = 4,
+var gridSize = 2,
     images, imgWidth, imgHeight,
     imagePuzzle, modele, xyshape = [],
     tapis,
@@ -12,11 +12,21 @@ var gridSize = 4,
     draggedPiece, zIndex = 0,
     offset = { x: 0, y: 0 },
     emplacement;
-// avoisins = [];
+const pathIsAbsolu = false;
+var pathX, pathY; // pour construire forme puzzle 
 /*
+impossible de saisir une pièce libre sur zone vide du rectangle d'un agrégat !!!
+- class clip-path => ok sur codepen mais ko sauf 1ere pièce => pb path relatif !?
+
+    clip-path défini dans 1 svg
+    une classe affecter ce clip-path à un autre svg
+
+- pointer-events : evnt souris sur zone masqué
+
 tableau avec données numérique stocké en string ?
 get dom agregat null
-piece agregé à retirer des voisins des autres pièces du même agrégat
+
+coordonnes fixes impossible de scroller => fixe à l'interieur d'une div
 */
 
 class Emplacement {
@@ -72,7 +82,7 @@ class Emplacement {
         // Trouver dans draggedPiece la pièce qui voisinNo pour voisin
         let pieceInDraggedNo = draggedPieceNo
         this.emplacement.forEach((pieceNoTab, pieceNo, tableau) => {
-            if (pieceNoTab.agregatNo == draggedPieceNo && tableau[pieceNo].voisins.indexOf(voisinNo) >= 0) {
+            if (pieceNoTab.agregatNo == draggedPieceNo && tableau[voisinNo].voisins.indexOf(pieceNo) >= 0) {
                 pieceInDraggedNo = pieceNo;
             }
         })
@@ -233,8 +243,6 @@ async function chargerPuzzle() {
     while (tapis.firstChild) {
         tapis.removeChild(tapis.firstChild);
     }
-    // document.querySelector('#tapis').style.display = "grid";
-    // document.querySelector('#modele').style.display = "block";
 
     slice();
 
@@ -272,17 +280,17 @@ function slice() {
 
     xyshape.length = 0 // Clear array
 
+    //style dynamique
+    for (let i = 0; i < document.styleSheets[0].cssRules.length; i++) {
+        // svg[position={clip-path: url(#path_x_y);}
+        if (document.styleSheets[0].cssRules[i].selectorText.indexOf("svg[position=") >= 0) {
+            document.styleSheets[0].deleteRule(i);
+        }
+    }
+
     for (let y = 0; y < yMax; y++) {
         for (let x = 0; x < xMax; x++) {
             createsvgpath(x, y, xMax, yMax);
-
-            //voisins
-            // avoisins.push([]);
-            // let position = y * yMax + x;
-            // if (x > 0) avoisins[position].push(y * yMax + x - 1); // left neighbour
-            // if (x < xMax - 1) avoisins[position].push(y * yMax + x + 1); // right neighbour
-            // if (y > 0) avoisins[position].push((y - 1) * yMax + x); // top neighbour
-            // if (y < yMax - 1) avoisins[position].push((y + 1) * yMax + x); // bottom neighbour
         }
     }
 
@@ -296,7 +304,7 @@ function shuffle() {
         for (let i = tapis.children.length; i > 0; i--) {
             tapis.appendChild(tapis.children[Math.random() * i | 0]);
         }
-    } while (success())
+    } while (success(false))
     for (let i = 0; i < tapis.children.length; i++) {
         tapis.children[i].style.left = ((i % gridSize) * svgWidth + tapis.offsetLeft) + "px"
         tapis.children[i].style.top = (Math.floor(i / gridSize) * svgHeight + tapis.offsetTop) + "px"
@@ -319,11 +327,15 @@ function createsvgpath(x, y, xMax, yMax) {
         bottom: bottom,
     };
 
+    let position = (y * yMax + x);
     let shapeid = "path_" + x + "_" + y; //@todo test si shape existe déjà
 
     let xPosition = x * pWidth // + pWidth10 * (left ? 2 : 0)
     let yPosition = y * pHeight // + pHeight10 * (top ? 2 : 0)
-    let shapepath = "M " + (xPosition + 0.5) + " " + (yPosition + 0.5) + " " + beziercurve(top, right, bottom, left);
+
+    pathX = (xPosition + 0.5); // init pour path absolu
+    pathY = (yPosition + 0.5);
+    let shapepath = "M " + pathX + " " + pathY + " " + beziercurve(top, right, bottom, left);
 
     let newPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
     newPath.setAttribute("d", shapepath);
@@ -331,10 +343,6 @@ function createsvgpath(x, y, xMax, yMax) {
     let newClipPath = document.createElementNS("http://www.w3.org/2000/svg", "clipPath");
     newClipPath.setAttribute("id", shapeid);
     newClipPath.appendChild(newPath);
-
-    // insérer dans svgmodele
-    // document.querySelector('#svgmodele').lastElementChild.appendChild(newClipPath);
-
 
     let newRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
     newRect.setAttribute("clip-path", "url(#" + shapeid + ")");
@@ -345,26 +353,27 @@ function createsvgpath(x, y, xMax, yMax) {
     newG.setAttribute("class", "gbordure");
     newG.appendChild(newRect);
 
-    // let newImage = document.createElementNS("http://www.w3.org/2000/svg", "image");
     let newImage = document.createElementNS("http://www.w3.org/2000/svg", "use");
-    // newImage.setAttribute("width", puzzleWidth + "px");
-    // newImage.setAttribute("height", puzzleHeight + "px");
-    newImage.setAttribute("clip-path", "url(#" + shapeid + ")");
     newImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', imagePuzzle);
 
+    newImage.setAttribute("clip-path", "url(#" + shapeid + ")");
+    // document.styleSheets[0].insertRule('svg[position="' + position + '"] {clip-path: url(#' + shapeid + ');}');
+    // https://codepen.io/vur/pen/pvxbwW
 
     let newSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     newSvg.setAttribute("width", svgWidth + "px");
     newSvg.setAttribute("height", svgHeight + "px");
     newSvg.setAttribute("viewBox", (xPosition - pWidth10 * 2) + " " + (yPosition - pHeight10 * 2) + " " + (1 + svgWidth) + " " + (1 + svgHeight));
+    // newSvg.setAttribute("clip-path", "url(#" + shapeid + ")");
 
-    // newSvg.setAttribute("id", "svg" + (y * yMax + x));
-    newSvg.setAttribute("position", y * yMax + x);
-    // newSvg.setAttribute("x", x);
-    // newSvg.setAttribute("y", y);
+    newSvg.setAttribute("position", position);
+
     newSvg.style.left = (x * svgWidth + tapis.offsetLeft) + "px"
     newSvg.style.top = (y * svgHeight + tapis.offsetTop) + "px"
+
     newSvg.appendChild(newClipPath);
+    // insérer dans svgmodele
+    // document.querySelector('#svgmodele').lastElementChild.appendChild(newClipPath);
 
     newSvg.appendChild(newG);
     newSvg.appendChild(newImage);
@@ -387,7 +396,7 @@ function beziercurve(top, right, bottom, left) {
     path += right == 0 ? "v " + pHeight : poignee(right, 90, pHeightajust);
     path += bottom == 0 ? "h " + -pWidth : poignee(bottom, 180, pWidthajust);
     path += left == 0 ? "Z" : poignee(left, 270, pHeightajust);
-    return path;
+    return pathIsAbsolu ? path.toUpperCase() : path;
 }
 
 function poignee(c, r, adjust) {
@@ -411,7 +420,14 @@ function trsl(x, y, c, r, adjust = 0) {
         Y = pHeight10 * x + adjust; //  x négatifs si creux
         X = pWidth10 * c * y;
     }
-    return (r == 180 ? -X : X) + "," + (r == 270 ? -Y : Y) + " "; // x négatif si 180°, y négatif si 270°
+    if (pathIsAbsolu) {
+        pathX += (r == 180 ? -X : X); // x négatif si 180°
+        pathY += (r == 270 ? -Y : Y); // y négatif si 270°
+        return pathX + "," + pathY + " ";
+
+    } else {
+        return (r == 180 ? -X : X) + "," + (r == 270 ? -Y : Y) + " "; // x négatif si 180°, y négatif si 270°
+    }
 }
 
 function startDrag(evt) {
@@ -434,87 +450,46 @@ function numTop(elem) {
     return parseInt(elem.style.top, 10);
 }
 
-function addViewbox(elem1, elem2, widthOrHeight) {
-    let iaxe = (widthOrHeight == "width" ? 2 : 3)
-    let aViewBox = elem1.getAttribute("viewBox").split(" ")
-    aViewBox[iaxe] = parseInt(aViewBox[iaxe]) + parseInt(elem2.getAttribute("viewBox").split(" ")[iaxe])
-    return aViewBox.join(" ")
-}
-
 function drag(evt) {
     if (draggedPiece) {
-        //console.log("drag evt.target:" + evt.target)
         evt.preventDefault();
-
         draggedPiece.style.left = (evt.screenX - offset.x) + "px"
         draggedPiece.style.top = (evt.screenY - offset.y) + "px"
-            // console.log("drag draggedPiece:" + draggedPiece + ", draggedPiece.style:" + draggedPiece.style.left + "," + draggedPiece.style.top)
-
-        // } else {
-        //     console.log("drag survol autre piece ? evt.target:" + evt.target)
     }
 }
 
 function endDrag(evt) {
     if (draggedPiece) {
-        console.log("draggedPiece")
         draggedPiece = null;
-        // } else {
-        //     console.log("endDrag survol autre piece ? evt.target:" + evt.target)
     }
 }
 
 function endDragDrop(evt) {
     if (draggedPiece) {
-        // console.log("endDragDrop evt.target:" + evt.target)
         // cherche piece voisine à proximité à agréger (et qui n'est pas déjà dans l'agrégat déplacé)
         if (emplacement.agregerVoisinsProches(draggedPiece)) {
             draggedPiece.remove()
         }
-        // todo vérifier succes si tout est agrégé
         draggedPiece = null;
+        success()
     }
 }
 
-function drop(evt) {
-    evt.preventDefault();
-    draggedPiece.style.zIndex = zIndex++;
-    if (this != draggedPiece) {
-        // draggedPiece : pièce déplacé, 
-        // this : pièce remplacé
-        const draggedPieceSibling = draggedPiece.nextSibling;
-        const draggedPieceParent = draggedPiece.parentNode;
-        this.parentNode.insertBefore(draggedPiece, this);
-        if (draggedPieceSibling) {
-            if (draggedPieceSibling != this) {
-                draggedPieceSibling.parentNode.insertBefore(this, draggedPieceSibling);
-            } else {
-                draggedPieceParent.insertBefore(this, draggedPiece);
-            }
-        } else {
-            draggedPieceParent.appendChild(this);
-        }
+function success(finish = true) {
+    if (tapis.children.length > 0) return false;
+    if (!finish) return true;
 
-        if (success()) {
-            // document.querySelector('.console_wrapper').style.display = "none";
-            document.querySelector('#results').style.display = "block";
-            document.querySelector('#modele').style.display = "none";
-            document.querySelector('#tapis').style.display = "none";
-            document.body.style.backgroundColor = "green";
+    document.querySelector('#results').style.display = "block";
+    document.querySelector('#modele').style.display = "none";
+    document.querySelector('#tapis').style.display = "none";
+    document.body.style.backgroundColor = "green";
 
-            for (let i = document.styleSheets[0].cssRules.length - 1; i >= 0; i--) {
-                let stylei = document.styleSheets[0].cssRules[i].selectorText;
-                if (stylei == ".gbordure") {
-                    document.styleSheets[0].deleteRule(i);
-                }
-            }
-
-        }
-    }
-}
-
-function success() {
-    return tapis.children.length == 1;
+    // for (let i = document.styleSheets[0].cssRules.length - 1; i >= 0; i--) {
+    //     let stylei = document.styleSheets[0].cssRules[i].selectorText;
+    //     if (stylei == ".gbordure") {
+    //         document.styleSheets[0].deleteRule(i);
+    //     }
+    // }
 }
 
 async function changerNiveau() {
