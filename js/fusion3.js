@@ -382,6 +382,12 @@ function createsvgpath(x, y, xMax, yMax) {
     newSvg.addEventListener('mouseup', endDragDrop); // drop 
     newSvg.addEventListener('mouseleave', endDrag);
 
+    newSvg.addEventListener('touchstart', startDrag);
+    newSvg.addEventListener('touchmove', drag);
+    newSvg.addEventListener('touchend', endDragDrop); // drop 
+    newSvg.addEventListener('touchleave', endDrag);
+    newSvg.addEventListener('touchcancel', endDrag);
+    
     tapis.appendChild(newSvg);
 }
 
