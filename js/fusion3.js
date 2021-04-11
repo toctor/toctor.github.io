@@ -15,19 +15,17 @@ var gridSize = 4,
 const pathIsAbsolu = false; // true ko : todo Génération Clip-Path absolu à revoir
 var pathX, pathY; // pour construire forme puzzle 
 var normalDrag = true; // set to false when drag piece under svg with masked zone
-/*
-impossible de saisir une pièce libre sur zone vide du rectangle d'un agrégat !!!
-- class clip-path => ok sur codepen mais ko sauf 1ere pièce => pb path relatif !?
 
-    clip-path défini dans 1 svg
-    une classe affecter ce clip-path à un autre svg
+/* @todo
+ supprimer de la draggedPiece les frontières avec l'agrégat cible ou régénérer le path du nouvel agrégat
 
-- pointer-events : evnt souris sur zone masqué
+améliioration
+- class clip-path absolu (évie la gestion des pièce sous zone masqué)
 
-tableau avec données numérique stocké en string ?
-get dom agregat null
-
-coordonnes fixes impossible de scroller => fixe à l'interieur d'une div
+fun
+- cube pack https://codepen.io/davidkpiano/pen/aqNZxX
+- animation de fin
+- chnagement d'image slider
 */
 
 class Emplacement {

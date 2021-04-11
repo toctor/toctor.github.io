@@ -11,29 +11,67 @@
 </head>
 
 <body>
-    <svg id="svgmodele">
-        <filter id="pieceBorderFilter">
-            <feMorphology operator="dilate" in="SourceGraphic" radius="1"/>
-        </filter>
-        <defs>
-            <image id="imgmodele" xlink:href=""></image>
-        </defs>
-    </svg>
     <div id="gamespace">
+        <svg id="svgmodele">
+            <filter id="pieceBorderFilter">
+                <feMorphology operator="dilate" in="SourceGraphic" radius="1"/>
+            </filter>
+            <defs>
+                <image id="imgmodele" xlink:href=""></image>
+            </defs>
+        </svg>
         <div><img id="modele" alt="full image"></div>
         <div id="tapis"></div>
-        <div id="choix">
-            <input class="taille" type="radio" name="level" value="3">Facile (3x3)
-            <input class="taille" type="radio" name="level" value="4" checked="checked">Normal (4x4)
-            <input class="taille" type="radio" name="level" value="6">Difficile (6x6)
-            <form>
-                <button id="changer">Changer d'image</button>
-                <input type="file" onchange="previewFile()">
-            </form>
-            <div id="results">
-                <h4>Bravo!</h4>
-                <button id="recharger">Rejouer</button>
-            </div>
+    </div>
+    <div id="choix">
+        <div id="bgcolor">
+
+            <label class="orange">
+                  <input type="radio" name="color" value="orange">
+                  <div class="layer"></div>
+                  <div class="button"><span></span></div>
+                </label>
+
+            <label class="amber">
+                  <input type="radio" name="color" value="amber">
+                  <div class="layer"></div>
+                  <div class="button"><span></span></div>
+                </label>
+
+            <label class="lime">
+                  <input type="radio" name="color" value="lime">
+                  <div class="layer"></div>
+                  <div class="button"><span></span></div>
+                </label>
+
+            <label class="teal">
+                  <input type="radio" name="color" value="teal">
+                  <div class="layer"></div>
+                  <div class="button"><span></span></div>
+                </label>
+
+            <label class="blue">
+                  <input type="radio" name="color" value="blue">
+                  <div class="layer"></div>
+                  <div class="button"><span></span></div>
+                </label>
+
+            <label class="indigo">
+                  <input type="radio" name="color" value="indigo">
+                  <div class="layer"></div>
+                  <div class="button"><span></span></div>
+                </label>
+        </div>
+        <input class="taille" type="radio" name="level" value="3">Facile (3x3)
+        <input class="taille" type="radio" name="level" value="4" checked="checked">Normal (4x4)
+        <input class="taille" type="radio" name="level" value="6">Difficile (6x6)
+        <form>
+            <button id="changer">Changer d'image</button>
+            <input type="file" onchange="previewFile()">
+        </form>
+        <div id="results">
+            <h4>Bravo!</h4>
+            <button id="recharger">Rejouer</button>
         </div>
     </div>
 </body>
