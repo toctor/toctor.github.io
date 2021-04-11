@@ -14,6 +14,7 @@ var gridSize = 4,
     emplacement;
 const pathIsAbsolu = false; // true ko : todo Génération Clip-Path absolu à revoir
 var pathX, pathY; // pour construire forme puzzle 
+var normalDrag = true; // set to false when drag piece under svg with masked zone
 /*
 impossible de saisir une pièce libre sur zone vide du rectangle d'un agrégat !!!
 - class clip-path => ok sur codepen mais ko sauf 1ere pièce => pb path relatif !?
@@ -239,7 +240,6 @@ async function chargerPuzzle() {
     imgWidth = modele.naturalWidth;
     imgHeight = modele.naturalHeight;
     //vidage pour rejeu
-    tapis = document.querySelector('#tapis');
     while (tapis.firstChild) {
         tapis.removeChild(tapis.firstChild);
     }
@@ -430,41 +430,89 @@ function trsl(x, y, c, r, adjust = 0) {
     }
 }
 
-function startDrag(evt) {
-    //  https://www.petercollingridge.co.uk/tutorials/svg/interactive/dragging/       
-    draggedPiece = evt.target.parentNode; // svg de Use
-    console.log("startDrag draggedPiece:" + draggedPiece)
-    draggedPiece.style.zIndex = zIndex++;
-
-    let x = numLeft(draggedPiece)
-    let y = numTop(draggedPiece)
-    offset.x = evt.screenX - x
-    offset.y = evt.screenY - y
-}
-
 function numLeft(elem) {
     return parseInt(elem.style.left, 10);
+}
+
+function numZindex(elem) {
+    return parseInt(elem.style.zIndex, 10);
 }
 
 function numTop(elem) {
     return parseInt(elem.style.top, 10);
 }
 
+function startDrag(evt) {
+    //  https://www.petercollingridge.co.uk/tutorials/svg/interactive/dragging/ 
+    // https://www.wikimass.com/js/mouseevent-properties
+    // console.log("startDrag draggedPiece:" + evt.target.nodeName + " : " + evt.x + "," + evt.y)
+    // let x = evt.screenX
+    // let y = evt.screenY
+    let x = evt.clientX
+    let y = evt.clientY
+
+
+    if (evt.target.nodeName == 'use') {
+        draggedPiece = evt.target.parentNode; // svg de Use
+    } else {
+        // cas svg avec zone vide qui empeche sélection pièce en dessous
+        let z = -1;
+        let svgM = evt.target;
+        document.querySelectorAll('svg[position]').forEach(svg => {
+            if (svgM == svg) return;
+
+            let xSvg = numLeft(svg),
+                ySvg = numTop(svg),
+                zSvg = svg.style.zIndex == "" ? 0 : numZindex(svg);
+            let xM = evt.clientX,
+                yM = evt.clientY;
+
+            //  sélection plus haute pièce
+            if (xM > xSvg && xM < xSvg + svg.clientWidth && yM > ySvg && yM < ySvg + svg.clientHeight && z < zSvg) {
+                draggedPiece = svg;
+                z = zSvg;
+            }
+        })
+        if (!draggedPiece) {
+            // console.log("startDrag svg non localisé :");
+            return;
+        }
+        normalDrag = false;
+    }
+
+    draggedPiece.style.zIndex = zIndex++;
+
+    offset.x = x - numLeft(draggedPiece)
+    offset.y = y - numTop(draggedPiece)
+    console.log("startDrag pret  position :" + draggedPiece.getAttribute("position"))
+}
+
 function drag(evt) {
+    // console.log("drag " + evt.target.nodeName + " : " + evt.x + "," + evt.y)
     if (draggedPiece) {
         evt.preventDefault();
-        draggedPiece.style.left = (evt.screenX - offset.x) + "px"
-        draggedPiece.style.top = (evt.screenY - offset.y) + "px"
+        console.log("drag " + evt.target.nodeName +
+                " piece left,top :" + draggedPiece.style.left + "," + draggedPiece.style.top +
+                ", mouse x,y :" + +evt.clientX + "," + evt.clientY +
+                ", delta x,y :" + (evt.screenX - offset.x) + "," + (evt.screenY - offset.y))
+            // draggedPiece.style.left = (evt.screenX - offset.x) + "px"
+            // draggedPiece.style.top = (evt.screenY - offset.y) + "px"
+            // draggedPiece.style.left = evt.clientX + "px"
+            // draggedPiece.style.top = evt.clientY + "px"
+        draggedPiece.style.left = (evt.clientX - offset.x) + "px"
+        draggedPiece.style.top = (evt.clientY - offset.y) + "px"
     }
 }
 
 function endDrag(evt) {
-    if (draggedPiece) {
+    // console.log("endDrag " + evt.target.nodeName + " : " + evt.x + "," + evt.y)
+    if (draggedPiece && normalDrag) {
         draggedPiece = null;
     }
 }
 
 function endDragDrop(evt) {
+    // console.log("endDragDrop " + evt.target.nodeName + " : " + evt.x + "," + evt.y)
     if (draggedPiece) {
         // cherche piece voisine à proximité à agréger (et qui n'est pas déjà dans l'agrégat déplacé)
         if (emplacement.agregerVoisinsProches(draggedPiece)) {
@@ -473,6 +521,8 @@ function endDragDrop(evt) {
         draggedPiece = null;
         success()
     }
+    normalDrag = true;
+
 }
 
 function success(finish = true) {
