@@ -381,13 +381,13 @@ function createsvgpath(x, y, xMax, yMax) {
     newSvg.addEventListener('mousemove', drag);
     newSvg.addEventListener('mouseup', endDragDrop); // drop 
     newSvg.addEventListener('mouseleave', endDrag);
+    // https://developer.mozilla.org/en-US/docs/Web/API/Touch_events
+    // var el = document.getElementById("canvas");
+    newSvg.addEventListener("touchstart", startDrag, false);
+    newSvg.addEventListener("touchmove", drag, false);
+    newSvg.addEventListener("touchend", endDragDrop, false);
+    newSvg.addEventListener("touchcancel", endDrag, false);
 
-    newSvg.addEventListener('touchstart', startDrag);
-    newSvg.addEventListener('touchmove', drag);
-    newSvg.addEventListener('touchend', endDragDrop); // drop 
-    newSvg.addEventListener('touchleave', endDrag);
-    newSvg.addEventListener('touchcancel', endDrag);
-    
     tapis.appendChild(newSvg);
 }
 
@@ -449,9 +449,15 @@ function numTop(elem) {
 function startDrag(evt) {
     //  https://www.petercollingridge.co.uk/tutorials/svg/interactive/dragging/ 
     // https://www.wikimass.com/js/mouseevent-properties
-    // console.log("startDrag draggedPiece:" + evt.target.nodeName + " : " + evt.x + "," + evt.y)
-    // let x = evt.screenX
-    // let y = evt.screenY
+
+    // https://developer.mozilla.org/en-US/docs/Web/API/Touch_events
+    evt.preventDefault();
+
+    if (evt.changedTouches) evt = evt.changedTouches[0];
+
+    console.log("startDrag draggedPiece:" + evt.target.nodeName + " : " + evt.clientX + "," + evt.clientY)
+        // let x = evt.screenX
+        // let y = evt.screenY
     let x = evt.clientX
     let y = evt.clientY
 
@@ -478,7 +484,7 @@ function startDrag(evt) {
             }
         })
         if (!draggedPiece) {
-            // console.log("startDrag svg non localisé :");
+            console.log("startDrag svg non localisé :");
             return;
         }
         normalDrag = false;
@@ -492,9 +498,10 @@ function startDrag(evt) {
 }
 
 function drag(evt) {
-    // console.log("drag " + evt.target.nodeName + " : " + evt.x + "," + evt.y)
+    evt.preventDefault();
+    if (evt.changedTouches) evt = evt.changedTouches[0];
+    console.log("drag " + evt.target.nodeName + " : " + evt.x + "," + evt.y)
     if (draggedPiece) {
-        evt.preventDefault();
         console.log("drag " + evt.target.nodeName +
                 " piece left,top :" + draggedPiece.style.left + "," + draggedPiece.style.top +
                 ", mouse x,y :" + +evt.clientX + "," + evt.clientY +
@@ -509,14 +516,20 @@ function drag(evt) {
 }
 
 function endDrag(evt) {
-    // console.log("endDrag " + evt.target.nodeName + " : " + evt.x + "," + evt.y)
+    evt.preventDefault();
+
+    if (evt.changedTouches) evt = evt.changedTouches[0];
+    console.log("endDrag " + evt.target.nodeName + " : " + evt.x + "," + evt.y)
     if (draggedPiece && normalDrag) {
         draggedPiece = null;
     }
 }
 
 function endDragDrop(evt) {
-    // console.log("endDragDrop " + evt.target.nodeName + " : " + evt.x + "," + evt.y)
+    evt.preventDefault();
+
+    if (evt.changedTouches) evt = evt.changedTouches[0];
+    console.log("endDragDrop " + evt.target.nodeName + " : " + evt.x + "," + evt.y)
     if (draggedPiece) {
         // cherche piece voisine à proximité à agréger (et qui n'est pas déjà dans l'agrégat déplacé)
         if (emplacement.agregerVoisinsProches(draggedPiece)) {
@@ -526,7 +539,6 @@ function endDragDrop(evt) {
         success()
     }
     normalDrag = true;
-
 }
 
 function success(finish = true) {
@@ -574,4 +586,4 @@ function previewFile() {
     }
 }
 
-document.addEventListener("DOMContentLoaded", function() { chargerImage() });
+document.addEventListener("DOMContentLoaded", chargerImage);
