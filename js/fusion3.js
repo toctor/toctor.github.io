@@ -15,6 +15,7 @@ var gridSize = 4,
 const pathIsAbsolu = false; // true ko : todo Génération Clip-Path absolu à revoir
 var pathX, pathY; // pour construire forme puzzle 
 var normalDrag = true; // set to false when drag piece under svg with masked zone
+var message;
 
 /* @todo
  supprimer de la draggedPiece les frontières avec l'agrégat cible ou régénérer le path du nouvel agrégat
@@ -218,6 +219,7 @@ async function chargerImage() {
 
     modele = document.querySelector("#modele");
     tapis = document.querySelector("#tapis");
+    message = document.querySelector("#message");
     await _loadImage(imagePuzzle, modele);
 
     await chargerPuzzle();
@@ -453,13 +455,17 @@ function startDrag(evt) {
     // https://developer.mozilla.org/en-US/docs/Web/API/Touch_events
     evt.preventDefault();
 
+    //todo drag de plusieurs pièces en même temps
     if (evt.changedTouches) evt = evt.changedTouches[0];
+    if (evt.touches) evt = evt.touches[0];
 
-    console.log("startDrag draggedPiece:" + evt.target.nodeName + " : " + evt.clientX + "," + evt.clientY)
-        // let x = evt.screenX
-        // let y = evt.screenY
+    // let x = evt.screenX
+    // let y = evt.screenY
     let x = evt.clientX
     let y = evt.clientY
+
+    console.log("startDrag draggedPiece:" + evt.target.nodeName + " : " + x + "," + y)
+    message.innerHTML = "startDrag draggedPiece:" + evt.target.nodeName + " : " + x + "," + y
 
 
     if (evt.target.nodeName == 'use') {
@@ -490,7 +496,7 @@ function startDrag(evt) {
         normalDrag = false;
     }
 
-    draggedPiece.style.zIndex = zIndex++;
+    draggedPiece.style.zIndex = ++zIndex;
 
     offset.x = x - numLeft(draggedPiece)
     offset.y = y - numTop(draggedPiece)
@@ -500,6 +506,8 @@ function startDrag(evt) {
 function drag(evt) {
     evt.preventDefault();
     if (evt.changedTouches) evt = evt.changedTouches[0];
+    if (evt.touches) evt = evt.touches[0];
+
     console.log("drag " + evt.target.nodeName + " : " + evt.x + "," + evt.y)
     if (draggedPiece) {
         console.log("drag " + evt.target.nodeName +
@@ -519,7 +527,10 @@ function endDrag(evt) {
     evt.preventDefault();
 
     if (evt.changedTouches) evt = evt.changedTouches[0];
-    console.log("endDrag " + evt.target.nodeName + " : " + evt.x + "," + evt.y)
+    if (evt.touches) evt = evt.touches[0];
+
+    console.log("endDrag " + evt.target.nodeName + " : " + evt.clientX + "," + evt.clientX)
+    message.innerHTML = "endDrag " + evt.target.nodeName + " : " + evt.clientX + "," + evt.clientX
     if (draggedPiece && normalDrag) {
         draggedPiece = null;
     }
@@ -529,6 +540,8 @@ function endDragDrop(evt) {
     evt.preventDefault();
 
     if (evt.changedTouches) evt = evt.changedTouches[0];
+    if (evt.touches) evt = evt.touches[0];
+
     console.log("endDragDrop " + evt.target.nodeName + " : " + evt.x + "," + evt.y)
     if (draggedPiece) {
         // cherche piece voisine à proximité à agréger (et qui n'est pas déjà dans l'agrégat déplacé)
