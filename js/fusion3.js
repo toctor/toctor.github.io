@@ -464,8 +464,8 @@ function startDrag(evt) {
     let x = evt.clientX
     let y = evt.clientY
 
-    console.log("startDrag draggedPiece:" + evt.target.nodeName + " : " + x + "," + y)
-    message.innerHTML = "startDrag draggedPiece:" + evt.target.nodeName + " : " + x + "," + y
+    // console.log("startDrag draggedPiece:" + evt.target.nodeName + " : " + x + "," + y)
+    // message.innerHTML = "startDrag draggedPiece:" + evt.target.nodeName + " : " + x + "," + y
 
 
     if (evt.target.nodeName == 'use') {
@@ -500,7 +500,7 @@ function startDrag(evt) {
 
     offset.x = x - numLeft(draggedPiece)
     offset.y = y - numTop(draggedPiece)
-    console.log("startDrag pret  position :" + draggedPiece.getAttribute("position"))
+        // console.log("startDrag pret  position :" + draggedPiece.getAttribute("position"))
 }
 
 function drag(evt) {
@@ -508,16 +508,12 @@ function drag(evt) {
     if (evt.changedTouches) evt = evt.changedTouches[0];
     if (evt.touches) evt = evt.touches[0];
 
-    console.log("drag " + evt.target.nodeName + " : " + evt.x + "," + evt.y)
+    // console.log("drag " + evt.target.nodeName + " : " + evt.x + "," + evt.y)
     if (draggedPiece) {
-        console.log("drag " + evt.target.nodeName +
-                " piece left,top :" + draggedPiece.style.left + "," + draggedPiece.style.top +
-                ", mouse x,y :" + +evt.clientX + "," + evt.clientY +
-                ", delta x,y :" + (evt.screenX - offset.x) + "," + (evt.screenY - offset.y))
-            // draggedPiece.style.left = (evt.screenX - offset.x) + "px"
-            // draggedPiece.style.top = (evt.screenY - offset.y) + "px"
-            // draggedPiece.style.left = evt.clientX + "px"
-            // draggedPiece.style.top = evt.clientY + "px"
+        // console.log("drag " + evt.target.nodeName +
+        //         " piece left,top :" + draggedPiece.style.left + "," + draggedPiece.style.top +
+        //         ", mouse x,y :" + +evt.clientX + "," + evt.clientY +
+        //         ", delta x,y :" + (evt.screenX - offset.x) + "," + (evt.screenY - offset.y))
         draggedPiece.style.left = (evt.clientX - offset.x) + "px"
         draggedPiece.style.top = (evt.clientY - offset.y) + "px"
     }
@@ -529,8 +525,8 @@ function endDrag(evt) {
     if (evt.changedTouches) evt = evt.changedTouches[0];
     if (evt.touches) evt = evt.touches[0];
 
-    console.log("endDrag " + evt.target.nodeName + " : " + evt.clientX + "," + evt.clientX)
-    message.innerHTML = "endDrag " + evt.target.nodeName + " : " + evt.clientX + "," + evt.clientX
+    // console.log("endDrag " + evt.target.nodeName + " : " + evt.clientX + "," + evt.clientX)
+    // message.innerHTML = "endDrag " + evt.target.nodeName + " : " + evt.clientX + "," + evt.clientX
     if (draggedPiece && normalDrag) {
         draggedPiece = null;
     }
@@ -542,7 +538,7 @@ function endDragDrop(evt) {
     if (evt.changedTouches) evt = evt.changedTouches[0];
     if (evt.touches) evt = evt.touches[0];
 
-    console.log("endDragDrop " + evt.target.nodeName + " : " + evt.x + "," + evt.y)
+    // console.log("endDragDrop " + evt.target.nodeName + " : " + evt.x + "," + evt.y)
     if (draggedPiece) {
         // cherche piece voisine à proximité à agréger (et qui n'est pas déjà dans l'agrégat déplacé)
         if (emplacement.agregerVoisinsProches(draggedPiece)) {
