@@ -16,12 +16,21 @@ const pathIsAbsolu = false; // true ko : todo Génération Clip-Path absolu à r
 var pathX, pathY; // pour construire forme puzzle 
 var normalDrag = true; // set to false when drag piece under svg with masked zone
 var message;
+var PuzzleShapeBorders = [];
 
 /* @todo
- supprimer de la draggedPiece les frontières avec l'agrégat cible ou régénérer le path du nouvel agrégat
+
+supprimer de la draggedPiece les frontières avec l'agrégat cible ou régénérer le path du nouvel agrégat
+- catalogue 8 tracés creux/bosse - aut/droit/bas/gauche
+
+scénario animation 
+1) animer le morcellemnt de l'image puis le mélange des pièces
+
+
 
 améliioration
 - class clip-path absolu (évie la gestion des pièce sous zone masqué)
+- orientation des pièces sur écran tactile, repositionnement deux doigts
 
 fun
 - cube pack https://codepen.io/davidkpiano/pen/aqNZxX
@@ -57,7 +66,7 @@ class Emplacement {
         }
     }
 
-    agregerVoisinsProches(draggedPiece) {
+    accoster(draggedPiece) {
         // cherche piece voisine à proximité à agréger (et qui n'est pas déjà dans l'agrégat déplacé)
         let draggedPieceNo = draggedPiece.getAttribute("position");
         if (!draggedPieceNo) return false;
@@ -114,6 +123,44 @@ class Emplacement {
         agregat.firstChild.firstChild.setAttribute("d", agregat.firstChild.firstChild.getAttribute("d") + draggedPiece.firstChild.firstChild.getAttribute("d"))
 
         // resize agregat 
+        this.resizeAgregat(draggedPieceNo, agregat, agregatNo)
+
+        //  maj draggedPiece & collecte pièces de agregatNo
+        let voisins = [];
+        let inAgregat = [];
+        this.emplacement.forEach((pieceNoTab, pieceNo) => {
+            if (pieceNoTab.agregatNo == agregatNo || pieceNoTab.agregatNo == draggedPieceNo) {
+                if (pieceNoTab.agregatNo == draggedPieceNo) {
+                    pieceNoTab.agregatNo = agregatNo; // maj rattachement à l'agrégat rejoint
+                }
+                voisins = voisins.concat(pieceNoTab.voisins); // collecte voisins de toutes les pièces de draggedPieceNo et agregatNo
+                inAgregat = inAgregat.concat(pieceNo); // collecte pièces de draggedPieceNo et agregatNo
+            }
+        });
+
+        // déplacer les voisins de TOUTES LES PIECES de draggedPiece dans agregat s'il n'y sont pas déjà en tant que voisin OU PIECE AGREGEE
+        let voisinsUpdate = [];
+        voisins.forEach(voisinNo => {
+            if (voisinsUpdate.indexOf(voisinNo) < 0 && inAgregat.indexOf(voisinNo) < 0) {
+                voisinsUpdate.push(voisinNo);
+            }
+        })
+        this.emplacement[agregatNo].voisins = voisinsUpdate;
+
+        // retirer draggedPieceNo et autre pièces qui constituent l'agrégat
+        //this.emplacement[agregatNo].voisins = this.emplacement[agregatNo].voisins.filter(voisinNo => { return voisinNo !== draggedPieceNo })
+        // this change à l'intérieur de la fonction foreach
+        this.emplacement.forEach((pieceNoTab, pieceNo, tableau) => {
+            if (pieceNoTab.agregatNo == agregatNo) {
+                tableau[agregatNo].voisins =
+                    tableau[agregatNo].voisins.filter(voisinNo => {
+                        return voisinNo !== pieceNo
+                    })
+            }
+        })
+    }
+
+    resizeAgregat(draggedPieceNo, agregat, agregatNo) {
         let viewbox = agregat.getAttribute("viewBox").split(" "),
             viewboxIsUpdate = false,
             deltaWidth = 0,
@@ -171,39 +218,6 @@ class Emplacement {
             agregat.setAttribute("viewBox", viewbox.join(" "))
         }
 
-        //  maj draggedPiece & collecte pièces de agregatNo
-        let voisins = [];
-        let inAgregat = [];
-        this.emplacement.forEach((pieceNoTab, pieceNo) => {
-            if (pieceNoTab.agregatNo == agregatNo || pieceNoTab.agregatNo == draggedPieceNo) {
-                if (pieceNoTab.agregatNo == draggedPieceNo) {
-                    pieceNoTab.agregatNo = agregatNo; // maj rattachement à l'agrégat rejoint
-                }
-                voisins = voisins.concat(pieceNoTab.voisins); // collecte voisins de toutes les pièces de draggedPieceNo et agregatNo
-                inAgregat = inAgregat.concat(pieceNo); // collecte pièces de draggedPieceNo et agregatNo
-            }
-        });
-
-        // déplacer les voisins de TOUTES LES PIECES de draggedPiece dans agregat s'il n'y sont pas déjà en tant que voisin OU PIECE AGREGEE
-        let voisinsUpdate = [];
-        voisins.forEach(voisinNo => {
-            if (voisinsUpdate.indexOf(voisinNo) < 0 && inAgregat.indexOf(voisinNo) < 0) {
-                voisinsUpdate.push(voisinNo);
-            }
-        })
-        this.emplacement[agregatNo].voisins = voisinsUpdate;
-
-        // retirer draggedPieceNo et autre pièces qui constituent l'agrégat
-        //this.emplacement[agregatNo].voisins = this.emplacement[agregatNo].voisins.filter(voisinNo => { return voisinNo !== draggedPieceNo })
-        // this change à l'intérieur de la fonction foreach
-        this.emplacement.forEach((pieceNoTab, pieceNo, tableau) => {
-            if (pieceNoTab.agregatNo == agregatNo) {
-                tableau[agregatNo].voisins =
-                    tableau[agregatNo].voisins.filter(voisinNo => {
-                        return voisinNo !== pieceNo
-                    })
-            }
-        })
     }
 }
 
@@ -263,6 +277,8 @@ function slice() {
     pWidth10 = Math.floor(pWidth / 10)
     pHeight10 = Math.floor(pHeight / 10)
 
+    initShapeSet();
+
     let xMax = gridSize;
     let yMax = gridSize;
 
@@ -287,6 +303,7 @@ function slice() {
             document.styleSheets[0].deleteRule(i);
         }
     }
+
 
     for (let y = 0; y < yMax; y++) {
         for (let x = 0; x < xMax; x++) {
@@ -333,9 +350,17 @@ function createsvgpath(x, y, xMax, yMax) {
     let xPosition = x * pWidth // + pWidth10 * (left ? 2 : 0)
     let yPosition = y * pHeight // + pHeight10 * (top ? 2 : 0)
 
-    pathX = (xPosition + 0.5); // init pour path absolu
-    pathY = (yPosition + 0.5);
-    let shapepath = "M " + pathX + " " + pathY + " " + beziercurve(top, right, bottom, left);
+    // pathX = (xPosition + 0.5); // init pour path absolu
+    // pathY = (yPosition + 0.5);
+    pathX = (xPosition); // init pour path absolu
+    pathY = (yPosition);
+
+    let shapepath = "M " + pathX + " " + pathY + " " +
+        // beziercurve(top, right, bottom, left);
+        PuzzleShapeBorders[0][top + 1] +
+        PuzzleShapeBorders[1][right + 1] +
+        PuzzleShapeBorders[2][bottom + 1] +
+        PuzzleShapeBorders[3][left + 1];
 
     let newPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
     newPath.setAttribute("d", shapepath);
@@ -403,6 +428,19 @@ function beziercurve(top, right, bottom, left) {
     path += bottom == 0 ? "h " + -pWidth : poignee(bottom, 180, pWidthajust);
     path += left == 0 ? "Z" : poignee(left, 270, pHeightajust);
     return pathIsAbsolu ? path.toUpperCase() : path;
+}
+
+function initShapeSet() {
+    let pWidthajust = pWidth % 10,
+        pHeightajust = pHeight % 10;
+
+    PuzzleShapeBorders = [ // [0-top/1-right/3-bottom/3-left][0-creux/1-flat/2-bosse]
+        [poignee(-1, 0, pWidthajust), "h " + pWidth, poignee(1, 0, pWidthajust)], // top 
+        [poignee(-1, 90, pHeightajust), "v " + pHeight, poignee(1, 90, pHeightajust)], // right
+        [poignee(-1, 180, pWidthajust), "h " + -pWidth, poignee(1, 180, pWidthajust)], // bottom
+        [poignee(-1, 270, pHeightajust), "v " + -pHeight, poignee(1, 270, pHeightajust)] // left
+        // ["Z", poignee(1, 270, pHeightajust), poignee(-1, 270, pHeightajust)] // left
+    ];
 }
 
 function poignee(c, r, adjust) {
@@ -541,7 +579,7 @@ function endDragDrop(evt) {
     // console.log("endDragDrop " + evt.target.nodeName + " : " + evt.x + "," + evt.y)
     if (draggedPiece) {
         // cherche piece voisine à proximité à agréger (et qui n'est pas déjà dans l'agrégat déplacé)
-        if (emplacement.agregerVoisinsProches(draggedPiece)) {
+        if (emplacement.accoster(draggedPiece)) {
             draggedPiece.remove()
         }
         draggedPiece = null;
