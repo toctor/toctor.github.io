@@ -21,6 +21,8 @@ var PuzzleShapeBorders = [];
 
 /* @todo
 
+tapis scrollable / piece position relative (impossible d'accèder aux pièces trop bas de l'écran)
+
 scénario animation 
 1) animer le morcellemnt de l'image puis le mélange des pièces
 
@@ -37,7 +39,7 @@ fun
 */
 
 class Emplacement {
-    constructor(xMax, yMax) {
+    constructor() {
         this.emplacement = [];
 
         for (let y = 0; y < yMax; y++) {
@@ -64,19 +66,19 @@ class Emplacement {
         }
     }
 
-    accoster(draggedPiece) {
+    accoster() {
         // cherche piece voisine à proximité à agréger (et qui n'est pas déjà dans l'agrégat déplacé)
         let draggedPieceNo = draggedPiece.getAttribute("position");
         if (!draggedPieceNo) return false;
         let isAgregated = false
         this.emplacement[draggedPieceNo].voisins.forEach(voisinNo => {
 
-            isAgregated = this.distance(draggedPiece, draggedPieceNo, voisinNo) || isAgregated
+            isAgregated = this.distance(draggedPieceNo, voisinNo) || isAgregated
         });
         return isAgregated;
     }
 
-    distance(draggedPiece, draggedPieceNo, voisinNo) {
+    distance(draggedPieceNo, voisinNo) {
 
         let agregatNo = voisinNo
         while (agregatNo != this.emplacement[agregatNo].agregatNo) {
@@ -109,14 +111,14 @@ class Emplacement {
         if (Math.abs(voisinLeft - dragLeft) < marge && Math.abs(voisinTop - dragTop) < marge) {
             //test draggedPieceNo ne vient pas d'être ajouté dans this.emplacement[agregatNo].voisins (proche de 2 voisins du même agrégat)
             if (this.emplacement[agregatNo].voisins.indexOf(pieceInDraggedNo) >= 0) {
-                this.agreger(draggedPiece, draggedPieceNo, agregat, agregatNo)
+                this.agreger(draggedPieceNo, agregat, agregatNo)
             }
             return true
         }
         return false
     }
 
-    agreger(draggedPiece, draggedPieceNo, agregat, agregatNo) {
+    agreger(draggedPieceNo, agregat, agregatNo) {
         // resize agregat 
         this.resizeAgregat(draggedPieceNo, agregat, agregatNo)
 
@@ -379,11 +381,11 @@ function slice() {
 
     for (let y = 0; y < yMax; y++) {
         for (let x = 0; x < xMax; x++) {
-            createsvgpath(x, y, xMax, yMax);
+            createsvgpath(x, y);
         }
     }
 
-    emplacement = new Emplacement(gridSize, gridSize);
+    emplacement = new Emplacement();
 
     console.log(emplacement);
 }
@@ -400,7 +402,7 @@ function shuffle() {
     }
 }
 
-function createsvgpath(x, y, xMax, yMax) {
+function createsvgpath(x, y) {
     let left = (x == 0 ? 0 : (xyshape[x - 1][y].right)),
         top = (y == 0 ? 0 : (xyshape[x][y - 1].bottom)),
         right = (x == xMax - 1 ? 0 : (Math.random() < 0.5 ? 1 : -1)),
@@ -633,8 +635,8 @@ function drag(evt) {
 function endDrag(evt) {
     evt.preventDefault();
 
-    if (evt.changedTouches) evt = evt.changedTouches[0];
-    if (evt.touches) evt = evt.touches[0];
+    // if (evt.changedTouches) evt = evt.changedTouches[0];
+    // if (evt.touches) evt = evt.touches[0];
 
     // console.log("endDrag " + evt.target.nodeName + " : " + evt.clientX + "," + evt.clientX)
     // message.innerHTML = "endDrag " + evt.target.nodeName + " : " + evt.clientX + "," + evt.clientX
@@ -646,13 +648,13 @@ function endDrag(evt) {
 function endDragDrop(evt) {
     evt.preventDefault();
 
-    if (evt.changedTouches) evt = evt.changedTouches[0];
-    if (evt.touches) evt = evt.touches[0];
+    // if (evt.changedTouches) evt = evt.changedTouches[0];
+    // if (evt.touches) evt = evt.touches[0];
 
     // console.log("endDragDrop " + evt.target.nodeName + " : " + evt.x + "," + evt.y)
     if (draggedPiece) {
         // cherche piece voisine à proximité à agréger (et qui n'est pas déjà dans l'agrégat déplacé)
-        if (emplacement.accoster(draggedPiece)) {
+        if (emplacement.accoster()) {
             draggedPiece.remove()
         }
         draggedPiece = null;

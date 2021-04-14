@@ -10,6 +10,16 @@
             "name": "Launch Chrome against localhost",
             "url": "http://localhost:5500",
             "webRoot": "${workspaceFolder}"
-        }
+        },
+        {
+            "type": "android-webview",
+            "request": "attach",
+            "name": "Attach to Android WebView",
+            "application": "com.android.chrome",
+            "urlFilter": "http://localhost:5500",
+            "url": "http://localhost:5500",
+            "webRoot": "${workspaceFolder}",
+            ""
+        }        
     ]
 }

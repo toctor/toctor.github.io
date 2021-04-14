@@ -19,15 +19,24 @@ body {
     display: none;
 }
 
-#tapis {
+
+/* #tapis {
     width: 500px;
 }
 
 #tapis svg {
     position: fixed;
     cursor: grab;
-    /* pointer-events: fill; */
-    /* SVG-only  https://developer.mozilla.org/fr/docs/Web/CSS/pointer-events */
+} */
+
+#tapis {
+    position: relative;
+    width: 500px;
+}
+
+#tapis svg {
+    position: absolute;
+    cursor: grab;
 }
 
 
