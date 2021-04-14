@@ -1,6 +1,7 @@
 var imagedebug = 'https://unsplash.it/600/600?image=598' // 1074 : lion
 const marge = 10;
 var gridSize = 4,
+    xMax, yMax,
     images, imgWidth, imgHeight,
     imagePuzzle, modele, xyshape = [],
     tapis,
@@ -19,9 +20,6 @@ var message;
 var PuzzleShapeBorders = [];
 
 /* @todo
-
-supprimer de la draggedPiece les frontières avec l'agrégat cible ou régénérer le path du nouvel agrégat
-- catalogue 8 tracés creux/bosse - aut/droit/bas/gauche
 
 scénario animation 
 1) animer le morcellemnt de l'image puis le mélange des pièces
@@ -119,9 +117,6 @@ class Emplacement {
     }
 
     agreger(draggedPiece, draggedPieceNo, agregat, agregatNo) {
-        // regrouper les d= dans le path du voisin     // @todo : éliminer les parcours internes, cas draggedPiece est un agrégat
-        agregat.firstChild.firstChild.setAttribute("d", agregat.firstChild.firstChild.getAttribute("d") + draggedPiece.firstChild.firstChild.getAttribute("d"))
-
         // resize agregat 
         this.resizeAgregat(draggedPieceNo, agregat, agregatNo)
 
@@ -158,6 +153,13 @@ class Emplacement {
                     })
             }
         })
+
+        // regrouper les d= dans le path du voisin     // @todo : éliminer les parcours internes, cas draggedPiece est un agrégat
+        // agregat.firstChild.firstChild.setAttribute("d", agregat.firstChild.firstChild.getAttribute("d") + draggedPiece.firstChild.firstChild.getAttribute("d"))
+
+        agregat.firstChild.firstChild.setAttribute("d", this.setAgregatPath(agregatNo, inAgregat))
+
+
     }
 
     resizeAgregat(draggedPieceNo, agregat, agregatNo) {
@@ -219,7 +221,77 @@ class Emplacement {
         }
 
     }
+
+    setAgregatPath(agregatNo, inAgregat) {
+        /* start from Top piece top
+                set border (top left right bottom) depending on neighbour x+(-1,0,1), y+(-1,0,1) => continue on same piece or neighbour piece side
+           stop when back to top piece top
+        */
+
+        //start from Top piece top
+        let startPosition = this.emplacement[agregatNo].agregatTopNo;
+        let side = 0;
+        let position = startPosition;
+        let coord = xyPosition(position);
+        let agregatPath = "M " + (coord.x * pWidth) + " " + (coord.y * pHeight) + " ";
+        let maxiteration = 1000
+        do {
+            console.log("position : " + position + ", side : " + side + ", coord.x, coord.y : " + coord.x + ", " + coord.y)
+            let shape = this.sideShape(side, coord.x, coord.y)
+            agregatPath += PuzzleShapeBorders[side][shape + 1];
+
+            let nextPath = this.findNextBorder(position, side, coord, inAgregat)
+            side = nextPath.side
+            position = nextPath.position
+            coord = xyPosition(position)
+        }
+        while (!(position == startPosition && side == 0) && maxiteration-- > 0)
+        console.log("end while position : " + position + ", side : " + side + ", coord.x, coord.y : " + coord.x + ", " + coord.y)
+        return agregatPath;
+    }
+
+    findNextBorder(position, side, coord, inAgregat) {
+        const sidesVoisin = [
+            [{ dx: 1, dy: -1, ns: 3 }, { dx: 1, dy: 0, ns: 0 }], // top 2 neighbours {delta x, delat y, next side}
+            [{ dx: 1, dy: 1, ns: 0 }, { dx: 0, dy: 1, ns: 1 }], // right neighbours
+            [{ dx: -1, dy: 1, ns: 1 }, { dx: -1, dy: 0, ns: 2 }], // bottom
+            [{ dx: -1, dy: -1, ns: 2 }, { dx: 0, dy: -1, ns: 3 }] // left
+        ];
+
+        for (let i = 0; i < 2; i++) {
+            let sv = sidesVoisin[side][i];
+            let x = coord.x + sv.dx,
+                y = coord.y + sv.dy;
+            if (x >= 0 && x < xMax && y >= 0 && y < yMax) {
+                let voisin = positionXY(x, y)
+                if (inAgregat.indexOf(voisin) >= 0) {
+                    return { position: voisin, side: sv.ns }
+                }
+            }
+        }
+        return { position: position, side: (side + 1) % 4 } // poursuivre sur la même pièce
+    }
+
+    sideShape(side, x, y) {
+        switch (side) {
+            case 0: // top
+                return y == 0 ? 0 : xyshape[x][y - 1].bottom;
+            case 1: // right
+                return x == xMax - 1 ? 0 : xyshape[x][y].right;
+            case 2: // bottom
+                return y == yMax - 1 ? 0 : xyshape[x][y].bottom;
+            case 3: // left
+                return x == 0 ? 0 : xyshape[x - 1][y].right;
+        }
+    }
 }
+
+
+
+function xyPosition(position) { return { x: position % gridSize, y: Math.floor(position / gridSize) } }
+
+function positionXY(x, y) { return y * yMax + x }
+
 
 async function chargerImage() {
     document.querySelectorAll(".taille").forEach(elem => elem.addEventListener("change", changerNiveau));
@@ -260,7 +332,7 @@ async function chargerPuzzle() {
 
     slice();
 
-    shuffle()
+    // shuffle()
 
 }
 
@@ -279,8 +351,8 @@ function slice() {
 
     initShapeSet();
 
-    let xMax = gridSize;
-    let yMax = gridSize;
+    xMax = gridSize;
+    yMax = gridSize;
 
     svgWidth = pWidth + pWidth10 * 4;
     svgHeight = pHeight + pHeight10 * 4;
@@ -434,11 +506,12 @@ function initShapeSet() {
     let pWidthajust = pWidth % 10,
         pHeightajust = pHeight % 10;
 
-    PuzzleShapeBorders = [ // [0-top/1-right/3-bottom/3-left][0-creux/1-flat/2-bosse]
+    PuzzleShapeBorders = [ // [0-top/1-right/3-bottom/3-left/4-first MOVE][0-creux/1-flat/2-bosse]
         [poignee(-1, 0, pWidthajust), "h " + pWidth, poignee(1, 0, pWidthajust)], // top 
         [poignee(-1, 90, pHeightajust), "v " + pHeight, poignee(1, 90, pHeightajust)], // right
         [poignee(-1, 180, pWidthajust), "h " + -pWidth, poignee(1, 180, pWidthajust)], // bottom
         [poignee(-1, 270, pHeightajust), "v " + -pHeight, poignee(1, 270, pHeightajust)] // left
+        // ["M " + (coord.x * pWidth) + " " + (coord.y * pHeight) + " "] // first move [4,0]
         // ["Z", poignee(1, 270, pHeightajust), poignee(-1, 270, pHeightajust)] // left
     ];
 }
