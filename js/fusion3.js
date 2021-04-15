@@ -1,4 +1,36 @@
-var imagedebug = 'https://unsplash.it/600/600?image=598' // 1074 : lion
+/* @todo
+
+bug : agregat avec trou : utiliser mask pour masquer pas les pieces manquantes
+touch : gérer plusieurs touches simultanées
+
+son "tic" lors de l'agrégation https://marcgg.com/blog/2016/11/01/javascript-audio/
+
+scénario animation 
+1) animer le morcellemnt de l'image puis le mélange des pièces
+
+a) puzzle constitué s'affiché sans modele
+b) fissure et se mélange tombre vers le bas ou autour du tapis
+c) le modèle s'affiche avc possibilité de le déplacer ? masquer/réafficher ?
+
+arrosage spirale : https://codepen.io/hakimel/pen/aIhkf
+pieces disposées en cubes imbriquées et tournants : https://webkit.org/blog-files/3d-transforms/morphing-cubes.html
+étaler sur le tapis avec  une impression de vague : https://codepen.io/hakimel/pen/vDnmp
+chaque piece réduise de taille et se raprochent pour faire une forme
+GSAP Morphsvg
+
+user current preference  : https://css-irl.info/debugging-media-queries-a-dev-tools-wish-list/
+
+améliioration
+- class clip-path absolu (évie la gestion des pièce sous zone masqué)
+- orientation des pièces sur écran tactile, repositionnement deux doigts
+
+fun
+- cube pack https://codepen.io/davidkpiano/pen/aqNZxX
+- animation de fin
+- chnagement d'image slider
+*/
+
+// var imagedebug = 'https://unsplash.it/600/600?image=598' // 1074 : lion
 const marge = 10;
 var gridSize = 4,
     xMax, yMax,
@@ -18,25 +50,7 @@ var pathX, pathY; // pour construire forme puzzle
 var normalDrag = true; // set to false when drag piece under svg with masked zone
 var message;
 var PuzzleShapeBorders = [];
-
-/* @todo
-
-tapis scrollable / piece position relative (impossible d'accèder aux pièces trop bas de l'écran)
-
-scénario animation 
-1) animer le morcellemnt de l'image puis le mélange des pièces
-
-
-
-améliioration
-- class clip-path absolu (évie la gestion des pièce sous zone masqué)
-- orientation des pièces sur écran tactile, repositionnement deux doigts
-
-fun
-- cube pack https://codepen.io/davidkpiano/pen/aqNZxX
-- animation de fin
-- chnagement d'image slider
-*/
+// var vitesseX, vitesseY;
 
 class Emplacement {
     constructor() {
@@ -119,6 +133,10 @@ class Emplacement {
     }
 
     agreger(draggedPieceNo, agregat, agregatNo) {
+
+        //son
+        sound()
+
         // resize agregat 
         this.resizeAgregat(draggedPieceNo, agregat, agregatNo)
 
@@ -238,7 +256,7 @@ class Emplacement {
         let agregatPath = "M " + (coord.x * pWidth) + " " + (coord.y * pHeight) + " ";
         let maxiteration = 1000
         do {
-            console.log("position : " + position + ", side : " + side + ", coord.x, coord.y : " + coord.x + ", " + coord.y)
+            // console.log("position : " + position + ", side : " + side + ", coord.x, coord.y : " + coord.x + ", " + coord.y)
             let shape = this.sideShape(side, coord.x, coord.y)
             agregatPath += PuzzleShapeBorders[side][shape + 1];
 
@@ -248,7 +266,7 @@ class Emplacement {
             coord = xyPosition(position)
         }
         while (!(position == startPosition && side == 0) && maxiteration-- > 0)
-        console.log("end while position : " + position + ", side : " + side + ", coord.x, coord.y : " + coord.x + ", " + coord.y)
+        // console.log("end while position : " + position + ", side : " + side + ", coord.x, coord.y : " + coord.x + ", " + coord.y)
         return agregatPath;
     }
 
@@ -288,18 +306,22 @@ class Emplacement {
     }
 }
 
-
-
 function xyPosition(position) { return { x: position % gridSize, y: Math.floor(position / gridSize) } }
 
 function positionXY(x, y) { return y * yMax + x }
 
+function numLeft(elem) { return parseInt(elem.style.left, 10); }
 
-async function chargerImage() {
+function numZindex(elem) { return parseInt(elem.style.zIndex, 10); }
+
+function numTop(elem) { return parseInt(elem.style.top, 10); }
+
+async function nouvelleImage() {
     document.querySelectorAll(".taille").forEach(elem => elem.addEventListener("change", changerNiveau));
-    document.querySelector("#changer").addEventListener("click", chargerImage);
+    document.querySelector("#nouvelleImage").addEventListener("click", nouvelleImage);
     document.querySelector("form").reset();
-    document.querySelector("#recharger").addEventListener("click", rechargerPage);
+    document.querySelector("#rejouer").addEventListener("click", chargerPuzzle);
+    document.querySelector('input[type=file]').addEventListener("click", previewFile);
     images = ['http://source.unsplash.com/random'];
     //let i = (Math.floor((Math.random() * (images.length - 1)) + 0.5));
     let i = 0;
@@ -332,73 +354,85 @@ async function chargerPuzzle() {
         tapis.removeChild(tapis.firstChild);
     }
 
+
     slice();
 
-    // shuffle()
+    shuffle()
 
-}
+    function slice() {
+        // width and height ratio
+        if (imgWidth > imgHeight) {
+            puzzleWidth = Math.floor(puzzleHeight * imgWidth / imgHeight)
+        } else {
+            puzzleHeight = Math.floor(puzzleWidth * imgHeight / imgWidth)
+        }
 
-function slice() {
-    // width and height ratio
-    if (imgWidth > imgHeight) {
-        puzzleWidth = Math.floor(puzzleHeight * imgWidth / imgHeight)
-    } else {
-        puzzleHeight = Math.floor(puzzleWidth * imgHeight / imgWidth)
+        pWidth = Math.floor(puzzleWidth / gridSize);
+        pHeight = Math.floor(puzzleHeight / gridSize);
+        pWidth10 = Math.floor(pWidth / 10)
+        pHeight10 = Math.floor(pHeight / 10)
+
+        initShapeSet();
+
+        xMax = gridSize;
+        yMax = gridSize;
+
+        svgWidth = pWidth + pWidth10 * 4;
+        svgHeight = pHeight + pHeight10 * 4;
+
+        tapis.style.width = (xMax * svgWidth) + 'px';
+        tapis.style.height = (yMax * svgHeight) + 'px';
+
+        puzzleWidth = xMax * pWidth
+        puzzleHeight = yMax * pHeight
+
+        document.querySelector('#imgmodele').setAttribute("width", puzzleWidth + "px");
+        document.querySelector('#imgmodele').setAttribute("height", puzzleHeight + "px");
+
+        xyshape.length = 0 // Clear array
+
+        //style dynamique
+        for (let i = 0; i < document.styleSheets[0].cssRules.length; i++) {
+            // svg[position={clip-path: url(#path_x_y);}
+            if (document.styleSheets[0].cssRules[i].selectorText.indexOf("svg[position=") >= 0) {
+                document.styleSheets[0].deleteRule(i);
+            }
+        }
+
+        for (let y = 0; y < yMax; y++) {
+            for (let x = 0; x < xMax; x++) {
+                createsvgpath(x, y);
+            }
+        }
+
+        emplacement = new Emplacement();
+        // console.log(emplacement);
     }
 
-    pWidth = Math.floor(puzzleWidth / gridSize);
-    pHeight = Math.floor(puzzleHeight / gridSize);
-    pWidth10 = Math.floor(pWidth / 10)
-    pHeight10 = Math.floor(pHeight / 10)
-
-    initShapeSet();
-
-    xMax = gridSize;
-    yMax = gridSize;
-
-    svgWidth = pWidth + pWidth10 * 4;
-    svgHeight = pHeight + pHeight10 * 4;
-
-    tapis.style.width = (xMax * svgWidth) + 'px';
-    tapis.style.height = (yMax * svgHeight) + 'px';
-
-    puzzleWidth = xMax * pWidth
-    puzzleHeight = yMax * pHeight
-
-    document.querySelector('#imgmodele').setAttribute("width", puzzleWidth + "px");
-    document.querySelector('#imgmodele').setAttribute("height", puzzleHeight + "px");
-
-    xyshape.length = 0 // Clear array
-
-    //style dynamique
-    for (let i = 0; i < document.styleSheets[0].cssRules.length; i++) {
-        // svg[position={clip-path: url(#path_x_y);}
-        if (document.styleSheets[0].cssRules[i].selectorText.indexOf("svg[position=") >= 0) {
-            document.styleSheets[0].deleteRule(i);
+    function shuffle() {
+        do {
+            for (let i = tapis.children.length; i > 0; i--) {
+                tapis.appendChild(tapis.children[Math.random() * i | 0]);
+            }
+        } while (success(false))
+        for (let i = 0; i < tapis.children.length; i++) {
+            tapis.children[i].style.left = ((i % gridSize) * svgWidth + tapis.offsetLeft) + "px"
+            tapis.children[i].style.top = (Math.floor(i / gridSize) * svgHeight + tapis.offsetTop) + "px"
         }
     }
 
+    function initShapeSet() {
+        let pWidthajust = pWidth % 10,
+            pHeightajust = pHeight % 10;
 
-    for (let y = 0; y < yMax; y++) {
-        for (let x = 0; x < xMax; x++) {
-            createsvgpath(x, y);
-        }
-    }
-
-    emplacement = new Emplacement();
-
-    console.log(emplacement);
-}
-
-function shuffle() {
-    do {
-        for (let i = tapis.children.length; i > 0; i--) {
-            tapis.appendChild(tapis.children[Math.random() * i | 0]);
-        }
-    } while (success(false))
-    for (let i = 0; i < tapis.children.length; i++) {
-        tapis.children[i].style.left = ((i % gridSize) * svgWidth + tapis.offsetLeft) + "px"
-        tapis.children[i].style.top = (Math.floor(i / gridSize) * svgHeight + tapis.offsetTop) + "px"
+        PuzzleShapeBorders = [ // [0-top/1-right/3-bottom/3-left/4-first MOVE][0-creux/1-flat/2-bosse]
+            [poignee(-1, 0, pWidthajust), "h " + pWidth, poignee(1, 0, pWidthajust)], // top 
+            [poignee(-1, 90, pHeightajust), "v " + pHeight, poignee(1, 90, pHeightajust)], // right
+            [poignee(-1, 180, pWidthajust), "h " + -pWidth, poignee(1, 180, pWidthajust)], // bottom
+            [poignee(-1, 270, pHeightajust), "v " + -pHeight, poignee(1, 270, pHeightajust)] // left
+            // ["M " + (coord.x * pWidth) + " " + (coord.y * pHeight) + " "] // first move [4,0]
+            // ["Z", poignee(1, 270, pHeightajust), poignee(-1, 270, pHeightajust)] // left
+        ];
     }
 }
 
@@ -478,44 +512,33 @@ function createsvgpath(x, y) {
     newSvg.appendChild(newImage);
 
     //grabbable
-    newSvg.addEventListener('mousedown', startDrag);
-    newSvg.addEventListener('mousemove', drag);
-    newSvg.addEventListener('mouseup', endDragDrop); // drop 
-    newSvg.addEventListener('mouseleave', endDrag);
-    // https://developer.mozilla.org/en-US/docs/Web/API/Touch_events
-    // var el = document.getElementById("canvas");
-    newSvg.addEventListener("touchstart", startDrag, false);
-    newSvg.addEventListener("touchmove", drag, false);
-    newSvg.addEventListener("touchend", endDragDrop, false);
-    newSvg.addEventListener("touchcancel", endDrag, false);
+    draggable(newSvg)
+        // newSvg.addEventListener('mousedown', startDrag);
+        // newSvg.addEventListener('mousemove', drag);
+        // newSvg.addEventListener('mouseup', endDragDrop); // drop 
+        // newSvg.addEventListener('mouseleave', endDrag);
+        // // https://developer.mozilla.org/en-US/docs/Web/API/Touch_events
+        // // var el = document.getElementById("canvas");
+        // newSvg.addEventListener("touchstart", startDrag, false);
+        // newSvg.addEventListener("touchmove", drag, false);
+        // newSvg.addEventListener("touchend", endDragDrop, false);
+        // newSvg.addEventListener("touchcancel", endDrag, false);
 
     tapis.appendChild(newSvg);
-}
 
-function beziercurve(top, right, bottom, left) {
-    let pWidthajust = pWidth % 10
-    let pHeightajust = pHeight % 10
 
-    let path = "";
-    path += top == 0 ? "h " + pWidth : poignee(top, 0, pWidthajust); // top 0°
-    path += right == 0 ? "v " + pHeight : poignee(right, 90, pHeightajust);
-    path += bottom == 0 ? "h " + -pWidth : poignee(bottom, 180, pWidthajust);
-    path += left == 0 ? "Z" : poignee(left, 270, pHeightajust);
-    return pathIsAbsolu ? path.toUpperCase() : path;
-}
+    function beziercurve(top, right, bottom, left) {
+        let pWidthajust = pWidth % 10
+        let pHeightajust = pHeight % 10
 
-function initShapeSet() {
-    let pWidthajust = pWidth % 10,
-        pHeightajust = pHeight % 10;
+        let path = "";
+        path += top == 0 ? "h " + pWidth : poignee(top, 0, pWidthajust); // top 0°
+        path += right == 0 ? "v " + pHeight : poignee(right, 90, pHeightajust);
+        path += bottom == 0 ? "h " + -pWidth : poignee(bottom, 180, pWidthajust);
+        path += left == 0 ? "Z" : poignee(left, 270, pHeightajust);
+        return pathIsAbsolu ? path.toUpperCase() : path;
+    }
 
-    PuzzleShapeBorders = [ // [0-top/1-right/3-bottom/3-left/4-first MOVE][0-creux/1-flat/2-bosse]
-        [poignee(-1, 0, pWidthajust), "h " + pWidth, poignee(1, 0, pWidthajust)], // top 
-        [poignee(-1, 90, pHeightajust), "v " + pHeight, poignee(1, 90, pHeightajust)], // right
-        [poignee(-1, 180, pWidthajust), "h " + -pWidth, poignee(1, 180, pWidthajust)], // bottom
-        [poignee(-1, 270, pHeightajust), "v " + -pHeight, poignee(1, 270, pHeightajust)] // left
-        // ["M " + (coord.x * pWidth) + " " + (coord.y * pHeight) + " "] // first move [4,0]
-        // ["Z", poignee(1, 270, pHeightajust), poignee(-1, 270, pHeightajust)] // left
-    ];
 }
 
 function poignee(c, r, adjust) {
@@ -527,140 +550,171 @@ function poignee(c, r, adjust) {
         " s " + trsl(2, 0, c, r) + trsl(1, -1, c, r) +
         " s " + trsl(1, -1, c, r) + trsl(1, -1, c, r) +
         " l " + trsl(3, 0, c, r);
-}
 
-function trsl(x, y, c, r, adjust = 0) {
-    let X, Y;
-    if (r == 0 || r == 180) {
-        X = pWidth10 * x + adjust;
-        Y = pHeight10 * c * y; //  y négatifs si creux
-    } else { // 90° ou 270°
-        // inverser x,y
-        Y = pHeight10 * x + adjust; //  x négatifs si creux
-        X = pWidth10 * c * y;
+    function trsl(x, y, c, r, adjust = 0) {
+        let X, Y;
+        if (r == 0 || r == 180) {
+            X = pWidth10 * x + adjust;
+            Y = pHeight10 * c * y; //  y négatifs si creux
+        } else { // 90° ou 270°
+            // inverser x,y
+            Y = pHeight10 * x + adjust; //  x négatifs si creux
+            X = pWidth10 * c * y;
+        }
+        if (pathIsAbsolu) {
+            pathX += (r == 180 ? -X : X); // x négatif si 180°
+            pathY += (r == 270 ? -Y : Y); // y négatif si 270°
+            return pathX + "," + pathY + " ";
+
+        } else {
+            return (r == 180 ? -X : X) + "," + (r == 270 ? -Y : Y) + " "; // x négatif si 180°, y négatif si 270°
+        }
     }
-    if (pathIsAbsolu) {
-        pathX += (r == 180 ? -X : X); // x négatif si 180°
-        pathY += (r == 270 ? -Y : Y); // y négatif si 270°
-        return pathX + "," + pathY + " ";
-
-    } else {
-        return (r == 180 ? -X : X) + "," + (r == 270 ? -Y : Y) + " "; // x négatif si 180°, y négatif si 270°
-    }
 }
 
-function numLeft(elem) {
-    return parseInt(elem.style.left, 10);
-}
+function draggable(newSvg) {
 
-function numZindex(elem) {
-    return parseInt(elem.style.zIndex, 10);
-}
-
-function numTop(elem) {
-    return parseInt(elem.style.top, 10);
-}
-
-function startDrag(evt) {
-    //  https://www.petercollingridge.co.uk/tutorials/svg/interactive/dragging/ 
-    // https://www.wikimass.com/js/mouseevent-properties
-
+    newSvg.addEventListener('mousedown', startDrag);
+    newSvg.addEventListener('mousemove', drag);
+    newSvg.addEventListener('mouseup', endDragDrop); // drop 
+    newSvg.addEventListener('mouseleave', endDrag);
     // https://developer.mozilla.org/en-US/docs/Web/API/Touch_events
-    evt.preventDefault();
+    // var el = document.getElementById("canvas");
+    newSvg.addEventListener("touchstart", startDrag, { passive: false });
+    newSvg.addEventListener("touchmove", drag, false);
+    newSvg.addEventListener("touchend", endDragDrop, false);
+    newSvg.addEventListener("touchcancel", endDrag, false);
 
-    //todo drag de plusieurs pièces en même temps
-    if (evt.changedTouches) evt = evt.changedTouches[0];
-    if (evt.touches) evt = evt.touches[0];
+    function startDrag(evt) {
+        //  https://www.petercollingridge.co.uk/tutorials/svg/interactive/dragging/ 
+        // https://www.wikimass.com/js/mouseevent-properties
 
-    // let x = evt.screenX
-    // let y = evt.screenY
-    let x = evt.clientX
-    let y = evt.clientY
+        // https://developer.mozilla.org/en-US/docs/Web/API/Touch_events
+        evt.preventDefault();
 
-    // console.log("startDrag draggedPiece:" + evt.target.nodeName + " : " + x + "," + y)
-    // message.innerHTML = "startDrag draggedPiece:" + evt.target.nodeName + " : " + x + "," + y
+        //todo drag de plusieurs pièces en même temps
+        if (evt.changedTouches) evt = evt.changedTouches[0];
+        if (evt.touches) evt = evt.touches[0];
+
+        // let x = evt.screenX
+        // let y = evt.screenY
+        let x = evt.clientX
+        let y = evt.clientY
+
+        // console.log("startDrag draggedPiece:" + evt.target.nodeName + " : " + x + "," + y)
+        // message.innerHTML = "startDrag draggedPiece:" + evt.target.nodeName + " : " + x + "," + y
 
 
-    if (evt.target.nodeName == 'use') {
-        draggedPiece = evt.target.parentNode; // svg de Use
-    } else {
-        // cas svg avec zone vide qui empeche sélection pièce en dessous
-        let z = -1;
-        let svgM = evt.target;
-        document.querySelectorAll('svg[position]').forEach(svg => {
-            if (svgM == svg) return;
+        if (evt.target.nodeName == 'use') {
+            draggedPiece = evt.target.parentNode; // svg de Use
+        } else {
+            // cas svg avec zone vide qui empeche sélection pièce en dessous
+            let z = -1;
+            let svgM = evt.target;
+            document.querySelectorAll('svg[position]').forEach(svg => {
+                if (svgM == svg) return;
 
-            let xSvg = numLeft(svg),
-                ySvg = numTop(svg),
-                zSvg = svg.style.zIndex == "" ? 0 : numZindex(svg);
-            let xM = evt.clientX,
-                yM = evt.clientY;
+                let xSvg = numLeft(svg),
+                    ySvg = numTop(svg),
+                    zSvg = svg.style.zIndex == "" ? 0 : numZindex(svg);
+                let xM = evt.clientX,
+                    yM = evt.clientY;
 
-            //  sélection plus haute pièce
-            if (xM > xSvg && xM < xSvg + svg.clientWidth && yM > ySvg && yM < ySvg + svg.clientHeight && z < zSvg) {
-                draggedPiece = svg;
-                z = zSvg;
+                //  sélection plus haute pièce
+                if (xM > xSvg && xM < xSvg + svg.clientWidth && yM > ySvg && yM < ySvg + svg.clientHeight && z < zSvg) {
+                    draggedPiece = svg;
+                    z = zSvg;
+                }
+            })
+            if (!draggedPiece) {
+                // console.log("startDrag svg non localisé :");
+                return;
             }
-        })
-        if (!draggedPiece) {
-            console.log("startDrag svg non localisé :");
-            return;
+            normalDrag = false;
         }
-        normalDrag = false;
+
+        draggedPiece.style.zIndex = ++zIndex;
+        vitesseX = 0;
+        vitesseY = 0;
+
+        offset.x = x - numLeft(draggedPiece)
+        offset.y = y - numTop(draggedPiece)
+            // console.log("startDrag pret  position :" + draggedPiece.getAttribute("position"))
     }
 
-    draggedPiece.style.zIndex = ++zIndex;
+    function drag(evt) {
+        evt.preventDefault();
+        if (evt.changedTouches) evt = evt.changedTouches[0];
+        if (evt.touches) evt = evt.touches[0];
 
-    offset.x = x - numLeft(draggedPiece)
-    offset.y = y - numTop(draggedPiece)
-        // console.log("startDrag pret  position :" + draggedPiece.getAttribute("position"))
-}
+        // console.log("drag " + evt.target.nodeName + " : " + evt.x + "," + evt.y)
+        if (draggedPiece) {
 
-function drag(evt) {
-    evt.preventDefault();
-    if (evt.changedTouches) evt = evt.changedTouches[0];
-    if (evt.touches) evt = evt.touches[0];
+            let x = evt.clientX - offset.x,
+                y = evt.clientY - offset.y;
 
-    // console.log("drag " + evt.target.nodeName + " : " + evt.x + "," + evt.y)
-    if (draggedPiece) {
-        // console.log("drag " + evt.target.nodeName +
-        //         " piece left,top :" + draggedPiece.style.left + "," + draggedPiece.style.top +
-        //         ", mouse x,y :" + +evt.clientX + "," + evt.clientY +
-        //         ", delta x,y :" + (evt.screenX - offset.x) + "," + (evt.screenY - offset.y))
-        draggedPiece.style.left = (evt.clientX - offset.x) + "px"
-        draggedPiece.style.top = (evt.clientY - offset.y) + "px"
-    }
-}
+            // anticiper accélération
+            // let px = numLeft(draggedPiece),
+            //     py = numTop(draggedPiece);
 
-function endDrag(evt) {
-    evt.preventDefault();
+            // let progressionX = Math.abs(x - px),
+            //     progressionY = Math.abs(y - py);
+            // if (progressionX > vitesseX) {
+            //     x += (x - px)
+            // }
+            // if (progressionY > vitesseY) {
+            //     y += (y - py)
+            // }
+            // console.log("drag " + evt.target.parentNode.id +
+            //     ", piece :" + px + "," + py +
+            //     ", vitesse :" + vitesseX + "," + vitesseY +
+            //     ", mouse :" + x + "," + y +
+            //     ", progression :" + progressionX + "," + progressionY)
 
-    // if (evt.changedTouches) evt = evt.changedTouches[0];
-    // if (evt.touches) evt = evt.touches[0];
+            // vitesseX = progressionX;
+            // vitesseY = progressionY;
 
-    // console.log("endDrag " + evt.target.nodeName + " : " + evt.clientX + "," + evt.clientX)
-    // message.innerHTML = "endDrag " + evt.target.nodeName + " : " + evt.clientX + "," + evt.clientX
-    if (draggedPiece && normalDrag) {
-        draggedPiece = null;
-    }
-}
 
-function endDragDrop(evt) {
-    evt.preventDefault();
+            // console.log("drag " + evt.target.nodeName +
+            //     " piece left,top :" + draggedPiece.style.left + "," + draggedPiece.style.top +
+            //     ", mouse x,y :" + +evt.clientX + "," + evt.clientY +
+            //     ", delta x,y :" + (evt.screenX - offset.x) + "," + (evt.screenY - offset.y) )
 
-    // if (evt.changedTouches) evt = evt.changedTouches[0];
-    // if (evt.touches) evt = evt.touches[0];
-
-    // console.log("endDragDrop " + evt.target.nodeName + " : " + evt.x + "," + evt.y)
-    if (draggedPiece) {
-        // cherche piece voisine à proximité à agréger (et qui n'est pas déjà dans l'agrégat déplacé)
-        if (emplacement.accoster()) {
-            draggedPiece.remove()
+            draggedPiece.style.left = x + "px"
+            draggedPiece.style.top = y + "px"
         }
-        draggedPiece = null;
-        success()
     }
-    normalDrag = true;
+
+    function endDrag(evt) {
+        evt.preventDefault();
+
+        // if (evt.changedTouches) evt = evt.changedTouches[0];
+        // if (evt.touches) evt = evt.touches[0];
+
+        // console.log("endDrag " + evt.target.nodeName + " : " + evt.clientX + "," + evt.clientX)
+        // message.innerHTML = "endDrag " + evt.target.nodeName + " : " + evt.clientX + "," + evt.clientX
+        if (draggedPiece && normalDrag) {
+            draggedPiece = null;
+        }
+    }
+
+    function endDragDrop(evt) {
+        evt.preventDefault();
+
+        // if (evt.changedTouches) evt = evt.changedTouches[0];
+        // if (evt.touches) evt = evt.touches[0];
+
+        // console.log("endDragDrop " + evt.target.nodeName + " : " + evt.x + "," + evt.y)
+        if (draggedPiece) {
+            // cherche piece voisine à proximité à agréger (et qui n'est pas déjà dans l'agrégat déplacé)
+            if (emplacement.accoster()) {
+                draggedPiece.remove()
+            }
+            draggedPiece = null;
+            success()
+        }
+        normalDrag = true;
+    }
 }
 
 function success(finish = true) {
@@ -687,7 +741,7 @@ async function changerNiveau() {
 
 async function rechargerPage() {
     // window.reload(true)
-    await chargerImage()
+    await nouvelleImage()
 }
 
 function previewFile() {
@@ -708,4 +762,14 @@ function previewFile() {
     }
 }
 
-document.addEventListener("DOMContentLoaded", chargerImage);
+function sound() {
+    var context = new AudioContext()
+    var o = context.createOscillator()
+    var g = context.createGain()
+    o.connect(g)
+    g.connect(context.destination)
+    o.start(0)
+    g.gain.exponentialRampToValueAtTime(0.00001, context.currentTime + 0.04)
+    o.stop(0.5)
+}
+document.addEventListener("DOMContentLoaded", nouvelleImage);
