@@ -37,6 +37,7 @@ body {
 #tapis svg {
     position: absolute;
     cursor: grab;
+    pointer-events: visiblePainted;
 }
 
 
