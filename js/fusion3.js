@@ -2,16 +2,9 @@
 biblio :
 https://developer.mozilla.org/en-US/
 
-bug : click zone vide selectionne pièce x+2 => offset du tapis à prendre en compte
-bug : mask à la place de clip-path ne prmet plus de sélectionner une pièce sous la zone vide de l'agrégat !!!
-        pb de mask : empeche selection piece en dessous, click target reste use et pas svg comme avec clip-path
-        => clip-path + <path d="..." clip-rule="evenodd"> ?
-        https://codepen.io/tutsplus/pen/WMZRmO?editors=1100
-        https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/clip-rule
-        https://webdesign.tutsplus.com/tutorials/a-comprehensive-guide-to-clipping-and-masking-in-svg--cms-30380
-            https://codepen.io/tutsplus/pen/WMZRmO?editors=1000
-bug cursor selection sur zone invisible :  https://developer.mozilla.org/fr/docs/Web/CSS/pointer-events
 
+
+bug : click zone vide selectionne pièce x+2 => offset du tapis à prendre en compte
 
 touch : gérer plusieurs touches simultanées
 
@@ -61,7 +54,7 @@ var gridSize = 4,
     pWidth, pHeight,
     pWidth10, pHeight10,
     svgWidth, svgHeight,
-    draggedPiece, zIndex = 0,
+    dragAgregatNo, dragAgregated, draggedPieceNo, draggedPiece, zIndex = 0,
     offset = { x: 0, y: 0 },
     emplacement;
 const pathIsAbsolu = false; // true ko : todo Génération Clip-Path absolu à revoir
@@ -71,7 +64,7 @@ var message;
 var PuzzleShapeBorders = [];
 // var vitesseX, vitesseY;
 
-class Emplacement {
+class Emplacement { // pieces are not regrouped in one, but moved together
     constructor() {
         this.emplacement = [];
 
@@ -79,6 +72,7 @@ class Emplacement {
             for (let x = 0; x < xMax; x++) {
                 // position
                 let position = y * yMax + x;
+                let svg = document.querySelector('svg[position="' + position + '"]');
 
                 //voisins
                 let voisins = [];
@@ -88,325 +82,119 @@ class Emplacement {
                 if (y < yMax - 1) voisins.push((y + 1) * yMax + x); // bottom neighbour
 
                 this.emplacement.push({
-                    voisins: voisins, // no pieces voisines du puzzle figé
-                    agregatNo: position, // no de l'agrégat contenant draggedPiece (l'agregat conserve le no de la première pièce)
-                    agregatLeftNo: position,
-                    agregatTopNo: position,
-                    agregatRightNo: position,
-                    agregatBottomNo: position
+                    svg: svg, // fixed
+                    x: x,
+                    y: y,
+                    voisins: voisins, // pieces voisines du puzzle mis à jours après agrégation. une pièce ne peut etre dans l'agrégat ET dans voisin !
+                    left: numLeft(svg), // mis à jour à chaque évaluation
+                    top: numTop(svg),
+                    agregatNo: position, // agrégat mis à jour à chaque intégration dans un agrégat
+                    agregated: [position],
+                    agregatVoisins: [...voisins] // pour éviter de pointer sur l'array de voisins
                 });
             }
         }
     }
 
-    accoster() {
-        // cherche piece voisine à proximité à agréger (et qui n'est pas déjà dans l'agrégat déplacé)
-        let draggedPieceNo = draggedPiece.getAttribute("position");
-        if (!draggedPieceNo) return false;
-        let isAgregated = false
-        this.emplacement[draggedPieceNo].voisins.forEach(voisinNo => {
-
-            isAgregated = this.distance(draggedPieceNo, voisinNo) || isAgregated
-        });
-        return isAgregated;
+    dragStart(zindex) {
+        draggedPieceNo = parseInt(draggedPiece.getAttribute("position"), 10)
+        dragAgregatNo = this.emplacement[draggedPieceNo].agregatNo
+        dragAgregated = this.emplacement[dragAgregatNo].agregated
+        dragAgregated.forEach(pieceNo => {
+            this.emplacement[pieceNo].svg.style.zIndex = zindex
+        })
     }
 
-    distance(draggedPieceNo, voisinNo) {
+    drag(left, top) {
+        this.setSvgLeftTop(dragAgregatNo, left - numLeft(draggedPiece), top - numTop(draggedPiece))
+    }
 
-        let agregatNo = voisinNo
-        while (agregatNo != this.emplacement[agregatNo].agregatNo) {
-            agregatNo = this.emplacement[agregatNo].agregatNo // biggest & latest agregat containing voisinNo
-        }
-        if (draggedPieceNo == agregatNo) return false;
+    setSvgLeftTop(pieceNo, deltaLeft, deltaTop) { // Déplacement des svg avec la souris ou touch
+        this.emplacement[pieceNo].agregated.forEach(p => {
+            let pieceNoSvg = this.emplacement[p].svg;
+            pieceNoSvg.style.left = (deltaLeft + numLeft(pieceNoSvg)) + "px"
+            pieceNoSvg.style.top = (deltaTop + numTop(pieceNoSvg)) + "px"
+        })
+    }
 
-        let agregat = document.querySelector('svg[position="' + agregatNo + '"]')
+    setLeftTop(pieceNo, deltaLeft, deltaTop) { // maj left et top de chaque piece de l'agrégat déplacé
+        this.emplacement[pieceNo].agregated.forEach(p => {
+            this.emplacement[p].left += deltaLeft
+            this.emplacement[p].top += deltaTop
+        })
+    }
 
-        // Trouver dans draggedPiece la pièce qui voisinNo pour voisin
-        let pieceInDraggedNo = draggedPieceNo
-        this.emplacement.forEach((pieceNoTab, pieceNo, tableau) => {
-            if (pieceNoTab.agregatNo == draggedPieceNo && tableau[voisinNo].voisins.indexOf(pieceNo) >= 0) {
-                pieceInDraggedNo = pieceNo;
+    dragEnd(left, top) {
+        let deltaLeft = left - this.emplacement[draggedPieceNo].left,
+            deltaTop = top - this.emplacement[draggedPieceNo].top;
+
+        // maj left et top de chaque piece de l'agrégat déplacé
+        this.setLeftTop(dragAgregatNo, deltaLeft, deltaTop)
+
+        let voisinsAgregatEvaluated = [],
+            toAjdustAgregated = [],
+            gapLeft,
+            gapTop;
+
+        // évaluer la distance des voisines de l'agregat de la piece déplacée 
+        // Pour chaque voisin de l'agregat drag
+        this.emplacement[dragAgregatNo].agregatVoisins.forEach(voisinNo => {
+
+            let voisinAgregatNo = this.emplacement[voisinNo].agregatNo
+
+            if (voisinsAgregatEvaluated.indexOf(voisinAgregatNo) < 0) { // agrégat du voisin n'a pas déjà été évalué  
+                voisinsAgregatEvaluated.push(voisinAgregatNo)
+
+                //  premiere pièce de l'agrétat voisin de firstVoisinNo  (1 seul suffit)
+                let dragNo = this.emplacement[voisinNo].voisins.find(p => { return dragAgregated.indexOf(p) >= 0 })
+
+                let dragged = this.emplacement[dragNo],
+                    voisin = this.emplacement[voisinNo];
+
+                gapLeft = dragged.left - (voisin.left + pWidth * (dragged.x == voisin.x ? 0 : (dragged.x > voisin.x ? 1 : -1)))
+                gapTop = dragged.top - (voisin.top + pHeight * (dragged.y == voisin.y ? 0 : (dragged.y > voisin.y ? 1 : -1)));
+
+                if ((Math.abs(gapLeft) < marge && Math.abs(gapTop) < marge)) {
+                    toAjdustAgregated.push({ voisinAgregatNo: voisinAgregatNo, gapLeft: gapLeft, gapTop: gapTop })
+                }
             }
+        });
+
+        // maj left et top de chaque piece de l'agrégat déplacé
+        toAjdustAgregated.forEach(g => {
+
+            this.agreger(g.voisinAgregatNo)
+
+            this.setLeftTop(g.voisinAgregatNo, g.gapLeft, g.gapTop)
+            this.setSvgLeftTop(g.voisinAgregatNo, g.gapLeft, g.gapTop)
         })
 
-        let voisinNoX = voisinNo % gridSize,
-            voisinNoY = Math.floor(voisinNo / gridSize);
-
-        let voisinLeft = numLeft(agregat) + pWidth * (voisinNoX - this.emplacement[agregatNo].agregatLeftNo % gridSize),
-            voisinTop = numTop(agregat) + pHeight * (voisinNoY - Math.floor(this.emplacement[agregatNo].agregatTopNo / gridSize));
-
-        let dragX = pieceInDraggedNo % gridSize,
-            dragY = Math.floor(pieceInDraggedNo / gridSize);
-
-        let dragLeft = numLeft(draggedPiece) + pWidth * (dragX - this.emplacement[draggedPieceNo].agregatLeftNo % gridSize + (dragX == voisinNoX ? 0 : (dragX > voisinNoX ? -1 : 1))),
-            dragTop = numTop(draggedPiece) + pHeight * (dragY - Math.floor(this.emplacement[draggedPieceNo].agregatTopNo / gridSize) + (dragY == voisinNoY ? 0 : (dragY > voisinNoY ? -1 : 1)));
-
-        if (Math.abs(voisinLeft - dragLeft) < marge && Math.abs(voisinTop - dragTop) < marge) {
-            //test draggedPieceNo ne vient pas d'être ajouté dans this.emplacement[agregatNo].voisins (proche de 2 voisins du même agrégat)
-            if (this.emplacement[agregatNo].voisins.indexOf(pieceInDraggedNo) >= 0) {
-                this.agreger(draggedPieceNo, agregat, agregatNo)
-            }
-            return true
-        }
-        return false
     }
 
-    agreger(draggedPieceNo, agregat, agregatNo) {
+    agreger(voisinAgregatNo) {
 
-        //son
         sound()
 
-        // resize agregat 
-        this.resizeAgregat(draggedPieceNo, agregat, agregatNo)
-
-        //  maj draggedPiece & collecte pièces de agregatNo
-        let voisins = [];
-        let inAgregat = [];
-        this.emplacement.forEach((pieceNoTab, pieceNo) => {
-            if (pieceNoTab.agregatNo == agregatNo || pieceNoTab.agregatNo == draggedPieceNo) {
-                if (pieceNoTab.agregatNo == draggedPieceNo) {
-                    pieceNoTab.agregatNo = agregatNo; // maj rattachement à l'agrégat rejoint
-                }
-                voisins = voisins.concat(pieceNoTab.voisins); // collecte voisins de toutes les pièces de draggedPieceNo et agregatNo
-                inAgregat = inAgregat.concat(pieceNo); // collecte pièces de draggedPieceNo et agregatNo
-            }
-        });
-
-        // déplacer les voisins de TOUTES LES PIECES de draggedPiece dans agregat s'il n'y sont pas déjà en tant que voisin OU PIECE AGREGEE
-        let voisinsUpdate = [];
-        voisins.forEach(voisinNo => {
-            if (voisinsUpdate.indexOf(voisinNo) < 0 && inAgregat.indexOf(voisinNo) < 0) {
-                voisinsUpdate.push(voisinNo);
-            }
+        // Ajouter pièces agrégat voisin à dragAgregated
+        this.emplacement[voisinAgregatNo].agregated.forEach(p => {
+            this.emplacement[dragAgregatNo].agregated.push(p) // ajouter pièces dans dragAgregated !!! vérifier que emplacement est bien mis à jour (pb réf array)
+            this.emplacement[p].agregatNo = dragAgregatNo // Rattacher pièces agrégat rejoint à dragAgregated
         })
-        this.emplacement[agregatNo].voisins = voisinsUpdate;
 
-        // retirer draggedPieceNo et autre pièces qui constituent l'agrégat
-        //this.emplacement[agregatNo].voisins = this.emplacement[agregatNo].voisins.filter(voisinNo => { return voisinNo !== draggedPieceNo })
-        // this change à l'intérieur de la fonction foreach
-        this.emplacement.forEach((pieceNoTab, pieceNo, tableau) => {
-            if (pieceNoTab.agregatNo == agregatNo) {
-                tableau[agregatNo].voisins =
-                    tableau[agregatNo].voisins.filter(voisinNo => {
-                        return voisinNo !== pieceNo
-                    })
+        // Ajouter nouveaux voisins  
+        this.emplacement[voisinAgregatNo].agregatVoisins.forEach(v => {
+            if (this.emplacement[dragAgregatNo].agregatVoisins.indexOf(v) < 0) { // sans doublons 
+                this.emplacement[dragAgregatNo].agregatVoisins.push(v);
             }
         })
 
-        // regrouper les d= dans le path du voisin     // @todo : éliminer les parcours internes, cas draggedPiece est un agrégat
-        // agregat.firstChild.firstChild.setAttribute("d", agregat.firstChild.firstChild.getAttribute("d") + draggedPiece.firstChild.firstChild.getAttribute("d"))
-
-        // agregat.firstChild.firstChild.setAttribute("d", this.setAgregatPath(agregatNo, inAgregat));
-        this.setAgregatPath(agregat, agregatNo, inAgregat);
-    }
-
-    resizeAgregat(draggedPieceNo, agregat, agregatNo) {
-        let viewbox = agregat.getAttribute("viewBox").split(" "),
-            viewboxIsUpdate = false,
-            deltaWidth = 0,
-            deltaHeight = 0;
-
-        let agregatLeftX = this.emplacement[agregatNo].agregatLeftNo % gridSize,
-            agregatTopY = Math.floor(this.emplacement[agregatNo].agregatTopNo / gridSize),
-            agregatRightX = this.emplacement[agregatNo].agregatRightNo % gridSize,
-            agregatBottomY = Math.floor(this.emplacement[agregatNo].agregatBottomNo / gridSize),
-            draggedPieceLeftNo = this.emplacement[draggedPieceNo].agregatLeftNo,
-            draggedPieceTopNo = this.emplacement[draggedPieceNo].agregatTopNo,
-            draggedPieceRightNo = this.emplacement[draggedPieceNo].agregatRightNo,
-            draggedPieceBottomNo = this.emplacement[draggedPieceNo].agregatBottomNo,
-            draggedPieceTopY = Math.floor(draggedPieceTopNo / gridSize),
-            draggedPieceLeftX = draggedPieceLeftNo % gridSize,
-            draggedPieceBottomY = Math.floor(draggedPieceBottomNo / gridSize),
-            draggedPieceRightX = draggedPieceRightNo % gridSize
-
-        if (draggedPieceLeftX < agregatLeftX) {
-            this.emplacement[agregatNo].agregatLeftNo = draggedPieceLeftNo
-            deltaWidth = agregatLeftX - draggedPieceLeftX;
-            agregat.style.left = (numLeft(agregat) - pWidth * deltaWidth) + "px";
-            agregat.setAttribute("width", (parseInt(agregat.getAttribute("width"), 10) + pWidth * deltaWidth) + "px")
-            viewbox[0] = parseInt(viewbox[0]) - pWidth * deltaWidth;
-            viewbox[2] = parseInt(viewbox[2]) + pWidth * deltaWidth;
-            viewboxIsUpdate = true
-        }
-
-        if (draggedPieceRightX > agregatRightX) {
-            this.emplacement[agregatNo].agregatRightNo = draggedPieceRightNo
-            deltaWidth = draggedPieceRightX - agregatRightX
-            agregat.setAttribute("width", (parseInt(agregat.getAttribute("width"), 10) + pWidth * deltaWidth) + "px")
-            viewbox[2] = parseInt(viewbox[2]) + pWidth * deltaWidth;
-            viewboxIsUpdate = true
-        }
-
-        if (draggedPieceTopY < agregatTopY) {
-            this.emplacement[agregatNo].agregatTopNo = draggedPieceTopNo
-            deltaHeight = agregatTopY - draggedPieceTopY
-            agregat.style.top = (numTop(agregat) - pHeight * deltaHeight) + "px";
-            agregat.setAttribute("height", (parseInt(agregat.getAttribute("height"), 10) + pHeight * deltaHeight) + "px")
-            viewbox[1] = parseInt(viewbox[1]) - pHeight * deltaHeight;
-            viewbox[3] = parseInt(viewbox[3]) + pHeight * deltaHeight;
-            viewboxIsUpdate = true
-        }
-
-        if (draggedPieceBottomY > agregatBottomY) {
-            this.emplacement[agregatNo].agregatBottomNo = draggedPieceBottomNo
-            deltaHeight = draggedPieceBottomY - agregatBottomY
-            agregat.setAttribute("height", (parseInt(agregat.getAttribute("height"), 10) + pHeight * deltaHeight) + "px")
-            viewbox[3] = parseInt(viewbox[3]) + pHeight * deltaHeight;
-            viewboxIsUpdate = true
-        }
-        if (viewboxIsUpdate) {
-            agregat.setAttribute("viewBox", viewbox.join(" "))
-        }
-
-    }
-
-    setAgregatPath(agregat, agregatNo, inAgregat) {
-        /* start from Top piece top
-                set border (top left right bottom) depending on neighbour x+(-1,0,1), y+(-1,0,1) => continue on same piece or neighbour piece side
-           stop when back to top piece top
-        */
-
-        //start from Top piece top
-        let startPosition = this.emplacement[agregatNo].agregatTopNo;
-        let side = 0;
-        let position = startPosition;
-        let coord = xyPosition(position);
-        let agregatPath = "M " + (coord.x * pWidth) + " " + (coord.y * pHeight) + " ";
-        let maxiteration = 1000
-        do {
-            // console.log("position : " + position + ", side : " + side + ", coord.x, coord.y : " + coord.x + ", " + coord.y)
-            let shape = this.sideShape(side, coord.x, coord.y)
-            agregatPath += PuzzleShapeBorders[side][shape + 1];
-
-            let nextPath = this.findNextBorder(position, side, coord, inAgregat)
-            side = nextPath.side
-            position = nextPath.position
-            coord = xyPosition(position)
-        }
-        while (!(position == startPosition && side == 0) && maxiteration-- > 0)
-        // console.log("end while position : " + position + ", side : " + side + ", coord.x, coord.y : " + coord.x + ", " + coord.y)
-
-        // svgMask.setAttribute("d", agregatPath);
-
-        //supprimer tous les paths
-        let svgMask = agregat.firstChild; // mask
-        while (svgMask.firstChild) { // path
-            svgMask.removeChild(svgMask.firstChild);
-        }
-
-        // creation path
-        let newPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        newPath.setAttribute("d", agregatPath);
-        newPath.setAttribute("fill", "white");
-        svgMask.appendChild(newPath);
-
-        // zones masquées au sein de l'agrégat
-        let surrounded = this.setAgregatHolesPath(agregatNo, inAgregat);
-        surrounded.forEach(pieceNo => {
-            newPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            newPath.setAttribute("d", document.querySelector('svg[position="' + pieceNo + '"]').firstChild.firstChild.getAttribute("d"));
-            // newPath.setAttribute("fill", "black"); // mask
-
-            svgMask.appendChild(newPath); // ajouter path à mask
+        // Retirer voisins intégrés
+        this.emplacement[dragAgregatNo].agregatVoisins = this.emplacement[dragAgregatNo].agregatVoisins.filter(v => {
+            return this.emplacement[dragAgregatNo].agregated.indexOf(v) < 0
         })
-
     }
 
-    setAgregatHolesPath(agregatNo, inAgregat) {
-        // https: //leetcode.com/problems/surrounded-regions/
-        // si plus de 7 pieces 
-        let xAgrMin = xyPosition(this.emplacement[agregatNo].agregatLeftNo).x,
-            yAgrMin = xyPosition(this.emplacement[agregatNo].agregatTopNo).y,
-            xAgrMax = xyPosition(this.emplacement[agregatNo].agregatRightNo).x,
-            yAgrMax = xyPosition(this.emplacement[agregatNo].agregatBottomNo).y;
-
-        let surrounded = [],
-            wayOut = [];
-        // pour chaque pièce de la zone rectangulaire de l'agrégat 
-        // todo en colimaçon
-        for (let y = yAgrMin; y <= yAgrMax; y++) {
-            for (let x = xAgrMin; x <= xAgrMax; x++) {
-                let pieceNo = positionXY(x, y)
-
-                if (inAgregat.indexOf(pieceNo) < 0) { // si la pièce n'est pas dans l'agrégat
-                    if (x == xAgrMin || x == xAgrMax || y == yAgrMin || y == yAgrMax) { // si la pièce est au bord de l'agrégat
-                        wayOut = wayOut.concat(pieceNo)
-                    } else {
-                        let isWayOut = false
-                        for (let v = 0; v < this.emplacement[pieceNo].voisins.length; v++) {
-                            let voisinNo = this.emplacement[pieceNo].voisins[v]
-                            if (wayOut.indexOf(voisinNo) >= 0) { // si un voisin est dans wayOut
-                                isWayOut = true
-                                break // inutile de voir les autres voisins
-                            } else {
-                                if (inAgregat.indexOf(voisinNo) < 0) {
-                                    let vxy = xyPosition(voisinNo)
-                                    if (vxy.x == xAgrMax || vxy.y == yAgrMax || vxy.x == xAgrMin || vxy.y == yAgrMin) { // si un voisin est au bord de l'agrégat
-                                        isWayOut = true
-                                        break // inutile de voir les autres voisins
-                                    }
-                                }
-                            }
-                        }
-                        if (isWayOut) {
-                            wayOut = wayOut.concat(pieceNo)
-                        } else {
-                            surrounded = surrounded.concat(pieceNo)
-                        }
-                    }
-                }
-            }
-        }
-        console.log("surrounded :" + surrounded.length)
-            // surrounded.forEach(pieceNo => {
-            //     let newPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            //     newPath.setAttribute("d", document.querySelector('svg[position="' + pieceNo + '"]').firstChild.firstChild.getAttribute("d"));
-            //     // newPath.setAttribute("fill", "black"); // mask
-
-        //     agregat.firstChild.appendChild(newPath); // ajouter path à mask
-        // })
-        return surrounded;
-    }
-
-    findNextBorder(position, side, coord, inAgregat) {
-        const sidesVoisin = [
-            [{ dx: 1, dy: -1, ns: 3 }, { dx: 1, dy: 0, ns: 0 }], // top 2 neighbours {delta x, delat y, next side}
-            [{ dx: 1, dy: 1, ns: 0 }, { dx: 0, dy: 1, ns: 1 }], // right neighbours
-            [{ dx: -1, dy: 1, ns: 1 }, { dx: -1, dy: 0, ns: 2 }], // bottom
-            [{ dx: -1, dy: -1, ns: 2 }, { dx: 0, dy: -1, ns: 3 }] // left
-        ];
-
-        for (let i = 0; i < 2; i++) {
-            let sv = sidesVoisin[side][i];
-            let x = coord.x + sv.dx,
-                y = coord.y + sv.dy;
-            if (x >= 0 && x < xMax && y >= 0 && y < yMax) {
-                let voisin = positionXY(x, y)
-                if (inAgregat.indexOf(voisin) >= 0) {
-                    return { position: voisin, side: sv.ns }
-                }
-            }
-        }
-        return { position: position, side: (side + 1) % 4 } // poursuivre sur la même pièce
-    }
-
-    sideShape(side, x, y) {
-        switch (side) {
-            case 0: // top
-                return y == 0 ? 0 : xyshape[x][y - 1].bottom;
-            case 1: // right
-                return x == xMax - 1 ? 0 : xyshape[x][y].right;
-            case 2: // bottom
-                return y == yMax - 1 ? 0 : xyshape[x][y].bottom;
-            case 3: // left
-                return x == 0 ? 0 : xyshape[x - 1][y].right;
-        }
-    }
 }
-
-function xyPosition(position) { return { x: position % gridSize, y: Math.floor(position / gridSize) } }
-
-function positionXY(x, y) { return y * yMax + x }
 
 function numLeft(elem) { return parseInt(elem.style.left, 10); }
 
@@ -457,6 +245,9 @@ async function chargerPuzzle() {
 
     // shuffle()
 
+    emplacement = new Emplacement();
+    // console.log(emplacement);
+
     function slice() {
         // width and height ratio
         if (imgWidth > imgHeight) {
@@ -503,8 +294,6 @@ async function chargerPuzzle() {
             }
         }
 
-        emplacement = new Emplacement();
-        // console.log(emplacement);
     }
 
     function shuffle() {
@@ -570,19 +359,37 @@ function createsvgpath(x, y) {
 
     let newPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
     newPath.setAttribute("d", shapepath);
-    newPath.setAttribute("fill", "white"); // mask
+    // newPath.setAttribute("fill", "white"); // mask
 
 
-    // let newClipPath = document.createElementNS("http://www.w3.org/2000/svg", "clipPath");
-    let newClipPath = document.createElementNS("http://www.w3.org/2000/svg", "mask");
+    /*
+    invisble area not clickable :
+    <svg width="103px" height="156px" viewBox="-14 -22 104 157" position="0" style="left: 208px; top: 8px;">
+    <clipPath id="path_0_0b">
+        <path d="M0.5,0.5H75.5L75.5,33.5S75.....5,112.5,21.5,112.5L0.5,112.5Z"></path>
+    </clipPath>
+    
+    <g class="gbordure">    <rect clip-path="url(#path_0_0b)" width="1080px" height="1618px" fill="#1D0F4E"></rect> </g>
+    ou
+      <rect width="103px" height="156px" fill="black"></rect>
+
+    <use xlink:href="#imgmodele" clip-path="url(#path_0_0b)"></use></svg>
+
+    +
+    svg[position="0"] {   clip-path: url(#path_0_0);}
+
+    */
+
+    let newClipPath = document.createElementNS("http://www.w3.org/2000/svg", "clipPath");
+    // let newClipPath = document.createElementNS("http://www.w3.org/2000/svg", "mask");
     newClipPath.setAttribute("id", shapeid);
     newClipPath.appendChild(newPath);
 
     let newImage = document.createElementNS("http://www.w3.org/2000/svg", "use");
     newImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', imagePuzzle);
 
-    // newImage.setAttribute("clip-path", "url(#" + shapeid + ")");
-    newImage.setAttribute("mask", "url(#" + shapeid + ")");
+    newImage.setAttribute("clip-path", "url(#" + shapeid + ")");
+    // newImage.setAttribute("mask", "url(#" + shapeid + ")");
     // document.styleSheets[0].insertRule('svg[position="' + position + '"] {clip-path: url(#' + shapeid + ');}');
     // https://codepen.io/vur/pen/pvxbwW
 
@@ -600,17 +407,23 @@ function createsvgpath(x, y) {
     newSvg.style.top = (y * svgHeight) + "px"
 
     // document.querySelector('#svgmodele').lastElementChild.appendChild(newClipPath);
+    // newSvg.appendChild(newClipPath);
+
+    let newRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    newRect.setAttribute("clip-path", "url(#" + shapeid + ")");
+    newRect.setAttribute("width", imgWidth + "px");
+    newRect.setAttribute("height", imgHeight + "px");
+    // newRect.setAttribute("width", svgWidth + "px");
+    // newRect.setAttribute("height", svgHeight + "px");
+    newRect.setAttribute("fill", "#1D0F4E");
+
+    // newClipPath.appendChild(newRect);
     newSvg.appendChild(newClipPath);
 
-    // let newRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-    // newRect.setAttribute("clip-path", "url(#" + shapeid + ")");
-    // newRect.setAttribute("width", imgWidth + "px");
-    // newRect.setAttribute("height", imgHeight + "px");
-    // newRect.setAttribute("fill", "#1D0F4E");
-    // let newG = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    let newG = document.createElementNS("http://www.w3.org/2000/svg", "g");
     // newG.setAttribute("class", "gbordure");
-    // newG.appendChild(newRect);
-    // newSvg.appendChild(newG);
+    newG.appendChild(newRect);
+    newSvg.appendChild(newG);
 
     newSvg.appendChild(newImage);
 
@@ -730,7 +543,9 @@ function draggable(newSvg) {
             normalDrag = false;
         }
 
-        draggedPiece.style.zIndex = ++zIndex;
+        // draggedPiece.style.zIndex = ++zIndex;
+        emplacement.dragStart(++zIndex)
+
         // vitesseX = 0;
         // vitesseY = 0;
 
@@ -746,39 +561,7 @@ function draggable(newSvg) {
 
         // console.log("drag " + evt.target.nodeName + " : " + evt.x + "," + evt.y)
         if (draggedPiece) {
-
-            let x = evt.clientX - offset.x,
-                y = evt.clientY - offset.y;
-
-            // anticiper accélération
-            // let px = numLeft(draggedPiece),
-            //     py = numTop(draggedPiece);
-
-            // let progressionX = Math.abs(x - px),
-            //     progressionY = Math.abs(y - py);
-            // if (progressionX > vitesseX) {
-            //     x += (x - px)
-            // }
-            // if (progressionY > vitesseY) {
-            //     y += (y - py)
-            // }
-            // console.log("drag " + evt.target.parentNode.id +
-            //     ", piece :" + px + "," + py +
-            //     ", vitesse :" + vitesseX + "," + vitesseY +
-            //     ", mouse :" + x + "," + y +
-            //     ", progression :" + progressionX + "," + progressionY)
-
-            // vitesseX = progressionX;
-            // vitesseY = progressionY;
-
-
-            // console.log("drag " + evt.target.nodeName +
-            //     " piece left,top :" + draggedPiece.style.left + "," + draggedPiece.style.top +
-            //     ", mouse x,y :" + +evt.clientX + "," + evt.clientY +
-            //     ", delta x,y :" + (evt.screenX - offset.x) + "," + (evt.screenY - offset.y) )
-
-            draggedPiece.style.left = x + "px"
-            draggedPiece.style.top = y + "px"
+            emplacement.drag(evt.clientX - offset.x, evt.clientY - offset.y)
         }
     }
 
@@ -797,16 +580,15 @@ function draggable(newSvg) {
 
     function endDragDrop(evt) {
         evt.preventDefault();
-
+        if (evt.changedTouches) evt = evt.changedTouches[0];
+        if (evt.touches) evt = evt.touches[0];
         // if (evt.changedTouches) evt = evt.changedTouches[0];
         // if (evt.touches) evt = evt.touches[0];
 
         // console.log("endDragDrop " + evt.target.nodeName + " : " + evt.x + "," + evt.y)
         if (draggedPiece) {
             // cherche piece voisine à proximité à agréger (et qui n'est pas déjà dans l'agrégat déplacé)
-            if (emplacement.accoster()) {
-                draggedPiece.remove()
-            }
+            emplacement.dragEnd(evt.clientX - offset.x, evt.clientY - offset.y)
             draggedPiece = null;
             success()
         }
@@ -872,6 +654,7 @@ function sound() {
 }
 
 function getPosition(el) {
+    // https://nerdparadise.com/programming/javascriptmouseposition
     var xPos = 0;
     var yPos = 0;
 
@@ -896,4 +679,24 @@ function getPosition(el) {
         y: yPos
     };
 }
+
+function findObjectCoords(mouseEvent, obj) {
+    //var obj = document.getElementById("objectBox");
+    var obj_left = 0;
+    var obj_top = 0;
+    var xpos;
+    var ypos;
+    while (obj.offsetParent) {
+        obj_left += obj.offsetLeft;
+        obj_top += obj.offsetTop;
+        obj = obj.offsetParent;
+    }
+    xpos = mouseEvent.pageX;
+    ypos = mouseEvent.pageY;
+
+    xpos -= obj_left;
+    ypos -= obj_top;
+    console.log("findObjectCoords :" + xpos + ", " + ypos)
+}
+
 document.addEventListener("DOMContentLoaded", nouvelleImage);
