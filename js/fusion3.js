@@ -1,12 +1,9 @@
 /* @todo
-biblio :
-https://developer.mozilla.org/en-US/
-
-
-
-bug : click zone vide selectionne pièce x+2 => offset du tapis à prendre en compte
 
 touch : gérer plusieurs touches simultanées
+piece border
+
+reduce emplacement use (double storage with dom element )
 
 cookies setting : SameSite=Lax : 
 
@@ -29,12 +26,14 @@ GSAP Morphsvg
 
 user current preference  : https://css-irl.info/debugging-media-queries-a-dev-tools-wish-list/
 
-améliioration
-- class clip-path absolu (évie la gestion des pièce sous zone masqué)
+amélioration
 - orientation des pièces sur écran tactile, repositionnement deux doigts
 
+biblio :
+https://developer.mozilla.org/en-US/
 https://ishadeed.com/article/say-hello-to-css-container-queries/
 https://codepen.io/HunorMarton/pen/PoGbgqj
+https://bashooka.com/
 
 fun
 - cube pack https://codepen.io/davidkpiano/pen/aqNZxX
@@ -48,7 +47,7 @@ var gridSize = 4,
     xMax, yMax,
     images, imgWidth, imgHeight,
     imagePuzzle, modele, xyshape = [],
-    tapis,
+    tapis, nbPiece,
     puzzleHeight = 300,
     puzzleWidth = 300, // @todo : ajust with screen size
     pWidth, pHeight,
@@ -160,15 +159,18 @@ class Emplacement { // pieces are not regrouped in one, but moved together
             }
         });
 
-        // maj left et top de chaque piece de l'agrégat déplacé
-        toAjdustAgregated.forEach(g => {
+        if (toAjdustAgregated) {
+            // maj left et top de chaque piece de l'agrégat déplacé
+            toAjdustAgregated.forEach(g => {
 
-            this.agreger(g.voisinAgregatNo)
+                this.agreger(g.voisinAgregatNo)
 
-            this.setLeftTop(g.voisinAgregatNo, g.gapLeft, g.gapTop)
-            this.setSvgLeftTop(g.voisinAgregatNo, g.gapLeft, g.gapTop)
-        })
+                this.setLeftTop(g.voisinAgregatNo, g.gapLeft, g.gapTop)
+                this.setSvgLeftTop(g.voisinAgregatNo, g.gapLeft, g.gapTop)
+            })
 
+            return this.success()
+        }
     }
 
     agreger(voisinAgregatNo) {
@@ -194,6 +196,14 @@ class Emplacement { // pieces are not regrouped in one, but moved together
         })
     }
 
+    success() {
+        for (let p = 1; p < nbPiece; p++) {
+            if (this.emplacement[p].agregatNo != this.emplacement[p - 1].agregatNo) {
+                return false
+            }
+        }
+        return true
+    }
 }
 
 function numLeft(elem) { return parseInt(elem.style.left, 10); }
@@ -243,7 +253,7 @@ async function chargerPuzzle() {
 
     slice();
 
-    // shuffle()
+    shuffle()
 
     emplacement = new Emplacement();
     // console.log(emplacement);
@@ -265,6 +275,7 @@ async function chargerPuzzle() {
 
         xMax = gridSize;
         yMax = gridSize;
+        nbPiece = xMax * yMax
 
         svgWidth = pWidth + pWidth10 * 4;
         svgHeight = pHeight + pHeight10 * 4;
@@ -297,11 +308,11 @@ async function chargerPuzzle() {
     }
 
     function shuffle() {
-        do {
-            for (let i = tapis.children.length; i > 0; i--) {
-                tapis.appendChild(tapis.children[Math.random() * i | 0]);
-            }
-        } while (success(false))
+        // do {
+        for (let i = tapis.children.length; i > 0; i--) {
+            tapis.appendChild(tapis.children[Math.random() * i | 0]);
+        }
+        // } while (success(false))
         for (let i = 0; i < tapis.children.length; i++) {
             tapis.children[i].style.left = ((i % gridSize) * svgWidth + tapis.offsetLeft) + "px"
             tapis.children[i].style.top = (Math.floor(i / gridSize) * svgHeight + tapis.offsetTop) + "px"
@@ -312,11 +323,20 @@ async function chargerPuzzle() {
         let pWidthajust = pWidth % 10,
             pHeightajust = pHeight % 10;
 
+        // PuzzleShapeBorders = [ // [0-top/1-right/3-bottom/3-left/4-first MOVE][0-creux/1-flat/2-bosse]
+        //     [poignee(-1, 0, pWidthajust), "h " + pWidth, poignee(1, 0, pWidthajust)], // top 
+        //     [poignee(-1, 90, pHeightajust), "v " + pHeight, poignee(1, 90, pHeightajust)], // right
+        //     [poignee(-1, 180, pWidthajust), "h " + -pWidth, poignee(1, 180, pWidthajust)], // bottom
+        //     [poignee(-1, 270, pHeightajust), "v " + -pHeight, poignee(1, 270, pHeightajust)] // left
+        //     // ["M " + (coord.x * pWidth) + " " + (coord.y * pHeight) + " "] // first move [4,0]
+        //     // ["Z", poignee(1, 270, pHeightajust), poignee(-1, 270, pHeightajust)] // left
+        // ];
+
         PuzzleShapeBorders = [ // [0-top/1-right/3-bottom/3-left/4-first MOVE][0-creux/1-flat/2-bosse]
-            [poignee(-1, 0, pWidthajust), "h " + pWidth, poignee(1, 0, pWidthajust)], // top 
-            [poignee(-1, 90, pHeightajust), "v " + pHeight, poignee(1, 90, pHeightajust)], // right
-            [poignee(-1, 180, pWidthajust), "h " + -pWidth, poignee(1, 180, pWidthajust)], // bottom
-            [poignee(-1, 270, pHeightajust), "v " + -pHeight, poignee(1, 270, pHeightajust)] // left
+            [poignee(-1, 0, pWidthajust), "h " + pWidth, poignee(1, 0, pWidthajust)], // horizontal left to right
+            [poignee(-1, 90, pHeightajust), "v " + pHeight, poignee(1, 90, pHeightajust)], // vertical top to bottom
+            // [poignee(-1, 180, pWidthajust), "h " + -pWidth, poignee(1, 180, pWidthajust)], // bottom
+            // [poignee(-1, 270, pHeightajust), "v " + -pHeight, poignee(1, 270, pHeightajust) // left
             // ["M " + (coord.x * pWidth) + " " + (coord.y * pHeight) + " "] // first move [4,0]
             // ["Z", poignee(1, 270, pHeightajust), poignee(-1, 270, pHeightajust)] // left
         ];
@@ -350,12 +370,17 @@ function createsvgpath(x, y) {
     pathX = (xPosition); // init pour path absolu
     pathY = (yPosition);
 
-    let shapepath = "M " + pathX + " " + pathY + " " +
+    // let shapepath = "M " + pathX + " " + pathY + " " +
+    // let shapepath = "M " + (pWidth10 * 2) + " " + (pHeight10 * 2) + " " +
+    let shapepath = "M " + (pWidth10 * 2) + " " + (pHeight10 * 2) + " " +
         // beziercurve(top, right, bottom, left);
         PuzzleShapeBorders[0][top + 1] +
         PuzzleShapeBorders[1][right + 1] +
-        PuzzleShapeBorders[2][bottom + 1] +
-        PuzzleShapeBorders[3][left + 1];
+        // PuzzleShapeBorders[2][bottom + 1] +
+        // PuzzleShapeBorders[3][left + 1];
+        "M " + (pWidth10 * 2) + " " + (pHeight10 * 2) + " " +
+        PuzzleShapeBorders[1][left + 1] +
+        PuzzleShapeBorders[0][bottom + 1];
 
     let newPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
     newPath.setAttribute("d", shapepath);
@@ -388,7 +413,7 @@ function createsvgpath(x, y) {
     let newImage = document.createElementNS("http://www.w3.org/2000/svg", "use");
     newImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', imagePuzzle);
 
-    newImage.setAttribute("clip-path", "url(#" + shapeid + ")");
+    // newImage.setAttribute("clip-path", "url(#" + shapeid + ")");
     // newImage.setAttribute("mask", "url(#" + shapeid + ")");
     // document.styleSheets[0].insertRule('svg[position="' + position + '"] {clip-path: url(#' + shapeid + ');}');
     // https://codepen.io/vur/pen/pvxbwW
@@ -398,17 +423,25 @@ function createsvgpath(x, y) {
     newSvg.setAttribute("height", svgHeight + "px");
     newSvg.setAttribute("viewBox", (xPosition - pWidth10 * 2) + " " + (yPosition - pHeight10 * 2) + " " + (1 + svgWidth) + " " + (1 + svgHeight));
     // newSvg.setAttribute("clip-path", "url(#" + shapeid + ")");
-
     newSvg.setAttribute("position", position);
+
+
+    /*
+    <svg width="168px" height="103px" viewBox="216 61 169 104" position="CSS6" style="left: 336px; top: 103px; clip-path: url(#csspath_2_1);">
+      <use xlink:href="#imgmodele"></use>
+    </svg>
+    */
 
     // newSvg.style.left = (x * svgWidth + tapis.offsetLeft) + "px"
     // newSvg.style.top = (y * svgHeight + tapis.offsetTop) + "px"
     newSvg.style.left = (x * svgWidth) + "px"
     newSvg.style.top = (y * svgHeight) + "px"
+    newSvg.style.clipPath = "url(#" + shapeid + ")"
 
     // document.querySelector('#svgmodele').lastElementChild.appendChild(newClipPath);
-    // newSvg.appendChild(newClipPath);
+    newSvg.appendChild(newClipPath);
 
+    /*
     let newRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
     newRect.setAttribute("clip-path", "url(#" + shapeid + ")");
     newRect.setAttribute("width", imgWidth + "px");
@@ -418,17 +451,17 @@ function createsvgpath(x, y) {
     newRect.setAttribute("fill", "#1D0F4E");
 
     // newClipPath.appendChild(newRect);
-    newSvg.appendChild(newClipPath);
+    // newSvg.appendChild(newClipPath);
 
     let newG = document.createElementNS("http://www.w3.org/2000/svg", "g");
-    // newG.setAttribute("class", "gbordure");
+    //newG.setAttribute("class", "gbordure");
     newG.appendChild(newRect);
     newSvg.appendChild(newG);
+    */
 
     newSvg.appendChild(newImage);
 
     draggable(newSvg)
-
     tapis.appendChild(newSvg);
 
     // function beziercurve() {
@@ -507,41 +540,41 @@ function draggable(newSvg) {
 
         console.log("startDrag draggedPiece:" + evt.target.nodeName + " : " + x + "," + y)
             // message.innerHTML = "startDrag draggedPiece:" + evt.target.nodeName + " : " + x + "," + y
-        let debug;
-        if (evt.target.nodeName == 'use') {
-            debug = getPosition(evt.target)
-            console.log("use : " + debug.x + "," + debug.y)
-            draggedPiece = evt.target.parentNode; // svg de Use
-            debug = getPosition(draggedPiece)
-            console.log("draggedPiece : " + debug.x + "," + debug.y)
-        } else {
-            // cas svg avec zone vide qui empeche sélection pièce en dessous
-            let z = -1;
-            debug = getPosition(evt.target)
-            console.log("evt.target : " + debug.x + "," + debug.y)
+            // let debug;
+            // if (evt.target.nodeName == 'use') {
+            // debug = getPosition(evt.target)
+            // console.log("use : " + debug.x + "," + debug.y)
+        draggedPiece = evt.target.parentNode; // svg de Use
+        // debug = getPosition(draggedPiece)
+        // console.log("draggedPiece : " + debug.x + "," + debug.y)
+        // } else {
+        //     // cas svg avec zone vide qui empeche sélection pièce en dessous
+        //     let z = -1;
+        //     debug = getPosition(evt.target)
+        //     console.log("evt.target : " + debug.x + "," + debug.y)
 
-            document.querySelectorAll('svg[position]').forEach(svg => {
-                if (svg != evt.target) {
-                    debug = getPosition(svg)
-                    console.log("svg : " + debug.x + "," + debug.y)
+        //     document.querySelectorAll('svg[position]').forEach(svg => {
+        //         if (svg != evt.target) {
+        //             debug = getPosition(svg)
+        //             console.log("svg : " + debug.x + "," + debug.y)
 
-                    let xSvg = numLeft(svg),
-                        ySvg = numTop(svg),
-                        zSvg = svg.style.zIndex == "" ? 0 : numZindex(svg);
+        //             let xSvg = numLeft(svg),
+        //                 ySvg = numTop(svg),
+        //                 zSvg = svg.style.zIndex == "" ? 0 : numZindex(svg);
 
-                    //  sélection plus haute pièce
-                    if (x > xSvg && x < xSvg + svg.clientWidth && y > ySvg && y < ySvg + svg.clientHeight && z < zSvg) {
-                        draggedPiece = svg;
-                        z = zSvg;
-                    }
-                }
-            })
-            if (!draggedPiece) {
-                // console.log("startDrag svg non localisé :");
-                return;
-            }
-            normalDrag = false;
-        }
+        //             //  sélection plus haute pièce
+        //             if (x > xSvg && x < xSvg + svg.clientWidth && y > ySvg && y < ySvg + svg.clientHeight && z < zSvg) {
+        //                 draggedPiece = svg;
+        //                 z = zSvg;
+        //             }
+        //         }
+        //     })
+        //     if (!draggedPiece) {
+        //         // console.log("startDrag svg non localisé :");
+        //         return;
+        //     }
+        //     normalDrag = false;
+        // }
 
         // draggedPiece.style.zIndex = ++zIndex;
         emplacement.dragStart(++zIndex)
@@ -588,18 +621,16 @@ function draggable(newSvg) {
         // console.log("endDragDrop " + evt.target.nodeName + " : " + evt.x + "," + evt.y)
         if (draggedPiece) {
             // cherche piece voisine à proximité à agréger (et qui n'est pas déjà dans l'agrégat déplacé)
-            emplacement.dragEnd(evt.clientX - offset.x, evt.clientY - offset.y)
+            if (emplacement.dragEnd(evt.clientX - offset.x, evt.clientY - offset.y)) {
+                success()
+            }
             draggedPiece = null;
-            success()
         }
         normalDrag = true;
     }
 }
 
-function success(finish = true) {
-    if (tapis.children.length > 1) return false;
-    if (!finish) return true;
-
+function success(finishTest = true) {
     document.querySelector('#results').style.display = "block";
     document.querySelector('#modele').style.display = "none";
     // document.querySelector('#tapis').style.display = "none";
