@@ -42,6 +42,7 @@ fun
 */
 
 // var imagedebug = 'https://unsplash.it/600/600?image=598' // 1074 : lion
+"use strict";
 const marge = 10;
 var gridSize = 4,
     xMax, yMax,
@@ -110,9 +111,9 @@ class Emplacement { // pieces are not regrouped in one, but moved together
 
     setSvgLeftTop(pieceNo, deltaLeft, deltaTop) { // Déplacement des svg avec la souris ou touch
         this.emplacement[pieceNo].agregated.forEach(p => {
-            let pieceNoSvg = this.emplacement[p].svg;
-            pieceNoSvg.style.left = (deltaLeft + numLeft(pieceNoSvg)) + "px"
-            pieceNoSvg.style.top = (deltaTop + numTop(pieceNoSvg)) + "px"
+            let svg = this.emplacement[p].svg;
+            svg.style.left = (deltaLeft + numLeft(svg)) + "px"
+            svg.style.top = (deltaTop + numTop(svg)) + "px"
         })
     }
 
@@ -292,12 +293,12 @@ async function chargerPuzzle() {
         xyshape.length = 0 // Clear array
 
         //style dynamique
-        for (let i = 0; i < document.styleSheets[0].cssRules.length; i++) {
-            // svg[position={clip-path: url(#path_x_y);}
-            if (document.styleSheets[0].cssRules[i].selectorText.indexOf("svg[position=") >= 0) {
-                document.styleSheets[0].deleteRule(i);
-            }
-        }
+        // for (let i = 0; i < document.styleSheets[0].cssRules.length; i++) {
+        //     // svg[position={clip-path: url(#path_x_y);}
+        //     if (document.styleSheets[0].cssRules[i].selectorText.indexOf("svg[position=") >= 0) {
+        //         document.styleSheets[0].deleteRule(i);
+        //     }
+        // }
 
         for (let y = 0; y < yMax; y++) {
             for (let x = 0; x < xMax; x++) {
@@ -322,23 +323,9 @@ async function chargerPuzzle() {
     function initShapeSet() {
         let pWidthajust = pWidth % 10,
             pHeightajust = pHeight % 10;
-
-        // PuzzleShapeBorders = [ // [0-top/1-right/3-bottom/3-left/4-first MOVE][0-creux/1-flat/2-bosse]
-        //     [poignee(-1, 0, pWidthajust), "h " + pWidth, poignee(1, 0, pWidthajust)], // top 
-        //     [poignee(-1, 90, pHeightajust), "v " + pHeight, poignee(1, 90, pHeightajust)], // right
-        //     [poignee(-1, 180, pWidthajust), "h " + -pWidth, poignee(1, 180, pWidthajust)], // bottom
-        //     [poignee(-1, 270, pHeightajust), "v " + -pHeight, poignee(1, 270, pHeightajust)] // left
-        //     // ["M " + (coord.x * pWidth) + " " + (coord.y * pHeight) + " "] // first move [4,0]
-        //     // ["Z", poignee(1, 270, pHeightajust), poignee(-1, 270, pHeightajust)] // left
-        // ];
-
         PuzzleShapeBorders = [ // [0-top/1-right/3-bottom/3-left/4-first MOVE][0-creux/1-flat/2-bosse]
             [poignee(-1, 0, pWidthajust), "h " + pWidth, poignee(1, 0, pWidthajust)], // horizontal left to right
             [poignee(-1, 90, pHeightajust), "v " + pHeight, poignee(1, 90, pHeightajust)], // vertical top to bottom
-            // [poignee(-1, 180, pWidthajust), "h " + -pWidth, poignee(1, 180, pWidthajust)], // bottom
-            // [poignee(-1, 270, pHeightajust), "v " + -pHeight, poignee(1, 270, pHeightajust) // left
-            // ["M " + (coord.x * pWidth) + " " + (coord.y * pHeight) + " "] // first move [4,0]
-            // ["Z", poignee(1, 270, pHeightajust), poignee(-1, 270, pHeightajust)] // left
         ];
     }
 }
@@ -533,54 +520,13 @@ function draggable(newSvg) {
         if (evt.changedTouches) evt = evt.changedTouches[0];
         if (evt.touches) evt = evt.touches[0];
 
-        // let x = evt.screenX
-        // let y = evt.screenY
         let x = evt.clientX
         let y = evt.clientY
 
-        console.log("startDrag draggedPiece:" + evt.target.nodeName + " : " + x + "," + y)
-            // message.innerHTML = "startDrag draggedPiece:" + evt.target.nodeName + " : " + x + "," + y
-            // let debug;
-            // if (evt.target.nodeName == 'use') {
-            // debug = getPosition(evt.target)
-            // console.log("use : " + debug.x + "," + debug.y)
+        // console.log("startDrag draggedPiece:" + evt.target.nodeName + " : " + x + "," + y)
         draggedPiece = evt.target.parentNode; // svg de Use
-        // debug = getPosition(draggedPiece)
-        // console.log("draggedPiece : " + debug.x + "," + debug.y)
-        // } else {
-        //     // cas svg avec zone vide qui empeche sélection pièce en dessous
-        //     let z = -1;
-        //     debug = getPosition(evt.target)
-        //     console.log("evt.target : " + debug.x + "," + debug.y)
 
-        //     document.querySelectorAll('svg[position]').forEach(svg => {
-        //         if (svg != evt.target) {
-        //             debug = getPosition(svg)
-        //             console.log("svg : " + debug.x + "," + debug.y)
-
-        //             let xSvg = numLeft(svg),
-        //                 ySvg = numTop(svg),
-        //                 zSvg = svg.style.zIndex == "" ? 0 : numZindex(svg);
-
-        //             //  sélection plus haute pièce
-        //             if (x > xSvg && x < xSvg + svg.clientWidth && y > ySvg && y < ySvg + svg.clientHeight && z < zSvg) {
-        //                 draggedPiece = svg;
-        //                 z = zSvg;
-        //             }
-        //         }
-        //     })
-        //     if (!draggedPiece) {
-        //         // console.log("startDrag svg non localisé :");
-        //         return;
-        //     }
-        //     normalDrag = false;
-        // }
-
-        // draggedPiece.style.zIndex = ++zIndex;
         emplacement.dragStart(++zIndex)
-
-        // vitesseX = 0;
-        // vitesseY = 0;
 
         offset.x = x - numLeft(draggedPiece)
         offset.y = y - numTop(draggedPiece)
@@ -592,7 +538,6 @@ function draggable(newSvg) {
         if (evt.changedTouches) evt = evt.changedTouches[0];
         if (evt.touches) evt = evt.touches[0];
 
-        // console.log("drag " + evt.target.nodeName + " : " + evt.x + "," + evt.y)
         if (draggedPiece) {
             emplacement.drag(evt.clientX - offset.x, evt.clientY - offset.y)
         }
@@ -618,7 +563,6 @@ function draggable(newSvg) {
         // if (evt.changedTouches) evt = evt.changedTouches[0];
         // if (evt.touches) evt = evt.touches[0];
 
-        // console.log("endDragDrop " + evt.target.nodeName + " : " + evt.x + "," + evt.y)
         if (draggedPiece) {
             // cherche piece voisine à proximité à agréger (et qui n'est pas déjà dans l'agrégat déplacé)
             if (emplacement.dragEnd(evt.clientX - offset.x, evt.clientY - offset.y)) {
@@ -649,11 +593,6 @@ async function changerNiveau() {
     chargerPuzzle();
 }
 
-async function rechargerPage() {
-    // window.reload(true)
-    await nouvelleImage()
-}
-
 function previewFile() {
     // The button where the user chooses the local image to display
     var file = document.querySelector('input[type=file]').files[0];
@@ -682,52 +621,6 @@ function sound() {
     o.start(0)
     g.gain.exponentialRampToValueAtTime(0.00001, context.currentTime + 0.04)
     o.stop(0.5)
-}
-
-function getPosition(el) {
-    // https://nerdparadise.com/programming/javascriptmouseposition
-    var xPos = 0;
-    var yPos = 0;
-
-    while (el) {
-        if (el.tagName == "BODY") {
-            // deal with browser quirks with body/window/document and page scroll
-            var xScroll = el.scrollLeft || document.documentElement.scrollLeft;
-            var yScroll = el.scrollTop || document.documentElement.scrollTop;
-
-            xPos += (el.offsetLeft - xScroll + el.clientLeft);
-            yPos += (el.offsetTop - yScroll + el.clientTop);
-        } else {
-            // for all other non-BODY elements
-            xPos += (el.offsetLeft - el.scrollLeft + el.clientLeft);
-            yPos += (el.offsetTop - el.scrollTop + el.clientTop);
-        }
-
-        el = el.offsetParent;
-    }
-    return {
-        x: xPos,
-        y: yPos
-    };
-}
-
-function findObjectCoords(mouseEvent, obj) {
-    //var obj = document.getElementById("objectBox");
-    var obj_left = 0;
-    var obj_top = 0;
-    var xpos;
-    var ypos;
-    while (obj.offsetParent) {
-        obj_left += obj.offsetLeft;
-        obj_top += obj.offsetTop;
-        obj = obj.offsetParent;
-    }
-    xpos = mouseEvent.pageX;
-    ypos = mouseEvent.pageY;
-
-    xpos -= obj_left;
-    ypos -= obj_top;
-    console.log("findObjectCoords :" + xpos + ", " + ypos)
 }
 
 document.addEventListener("DOMContentLoaded", nouvelleImage);
