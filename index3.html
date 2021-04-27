@@ -20,60 +20,62 @@
                 <image id="imgmodele" xlink:href=""></image>
             </defs>
         </svg>
-        <div><img id="modele" alt="full image"></div>
-        <div id="tapis"></div>
-    </div>
-    <div id="choix">
-        <div id="bgcolor">
+        <div id="choix">
+            <div id="bgcolor">
 
-            <label class="orange">
+                <label class="orange">
                   <input type="radio" name="color" value="orange">
                   <div class="layer"></div>
                   <div class="button"><span></span></div>
                 </label>
 
-            <label class="amber">
+                <label class="amber">
                   <input type="radio" name="color" value="amber">
                   <div class="layer"></div>
                   <div class="button"><span></span></div>
                 </label>
 
-            <label class="lime">
+                <label class="lime">
                   <input type="radio" name="color" value="lime">
                   <div class="layer"></div>
                   <div class="button"><span></span></div>
                 </label>
 
-            <label class="teal">
+                <label class="teal">
                   <input type="radio" name="color" value="teal">
                   <div class="layer"></div>
                   <div class="button"><span></span></div>
                 </label>
 
-            <label class="blue">
+                <label class="blue">
                   <input type="radio" name="color" value="blue">
                   <div class="layer"></div>
                   <div class="button"><span></span></div>
                 </label>
 
-            <label class="indigo">
+                <label class="indigo">
                   <input type="radio" name="color" value="indigo">
                   <div class="layer"></div>
                   <div class="button"><span></span></div>
                 </label>
+            </div>
+            <form id="choixImage">
+                <span id="results">
+                <span>Bravo!</span>
+                <button id="rejouer">Rejouer</button>
+                </span>
+                <button id="nouvelleImage">Changer d'image</button>
+                <input type="file" onchange="previewFile()">
+                <label id="message"></label>
+            </form>
+            <div id="level">
+                <input class="taille" type="radio" name="level" value="3">Facile (3x3)
+                <input class="taille" type="radio" name="level" value="4" checked="checked">Normal (4x4)
+                <input class="taille" type="radio" name="level" value="6">Difficile (6x6)
+            </div>
         </div>
-        <input class="taille" type="radio" name="level" value="3">Facile (3x3)
-        <input class="taille" type="radio" name="level" value="4" checked="checked">Normal (4x4)
-        <input class="taille" type="radio" name="level" value="6">Difficile (6x6)
-        <form>
-            <button id="nouvelleImage">Changer d'image</button>
-            <input type="file" onchange="previewFile()">
-            <label id="message"></label>
-        </form>
-        <div id="results">
-            <h4>Bravo!</h4>
-            <button id="rejouer">Rejouer</button>
-        </div>
+        <div id="tapis"></div>
+        <div><img id="modele" alt="full image"></div>
     </div>
 </body>
 

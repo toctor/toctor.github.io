@@ -1,5 +1,7 @@
 /* @todo
 
+touch screen bug : agregat move up or left pieces overload each other
+
 touch : gérer plusieurs touches simultanées
 piece border
 
@@ -8,6 +10,7 @@ reduce emplacement use (double storage with dom element )
 cookies setting : SameSite=Lax : 
 
 sound on/off
+choix image : gallerie avec images préférées, réussies, nouvelles, ...
 
 scénario animation 
 1) animer le morcellemnt de l'image puis le mélange des pièces
@@ -37,6 +40,8 @@ https://bashooka.com/
 
 fun
 - cube pack https://codepen.io/davidkpiano/pen/aqNZxX
+- photo tear : https://codepen.io/ste-vg/pen/rNjOgYv
+text blinker : https://codepen.io/RoryGrenade/pen/XbeGZr
 - animation de fin
 - chnagement d'image slider
 */
@@ -315,8 +320,10 @@ async function chargerPuzzle() {
         }
         // } while (success(false))
         for (let i = 0; i < tapis.children.length; i++) {
-            tapis.children[i].style.left = ((i % gridSize) * svgWidth + tapis.offsetLeft) + "px"
-            tapis.children[i].style.top = (Math.floor(i / gridSize) * svgHeight + tapis.offsetTop) + "px"
+            // tapis.children[i].style.left = ((i % gridSize) * svgWidth + tapis.offsetLeft) + "px"
+            // tapis.children[i].style.top = (Math.floor(i / gridSize) * svgHeight + tapis.offsetTop) + "px"
+            tapis.children[i].style.left = ((i % gridSize) * svgWidth) + "px"
+            tapis.children[i].style.top = (Math.floor(i / gridSize) * svgHeight) + "px"
         }
     }
 
