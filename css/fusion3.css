@@ -56,7 +56,8 @@ body {
 
 #choix {
     background-color: rgb(206, 247, 27);
-    height: 6em;
+    /* height: 6em; */
+    width: 100%;
 }
 
 

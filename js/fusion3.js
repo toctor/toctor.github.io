@@ -1,10 +1,14 @@
 /* @todo
 
-touch screen bug : agregat move up or left pieces overload each other
 
 touch : gérer plusieurs touches simultanées
+    https://developer.mozilla.org/en-US/docs/Web/API/Document/elementFromPoint
+    http://www.javascriptkit.com/javatutors/touchevents.shtml
+
+
 piece border
 
+déplacement rapide perd la piece => acceleration ou positionner/rapprocher  centre piece sous la souris
 reduce emplacement use (double storage with dom element )
 
 cookies setting : SameSite=Lax : 
@@ -19,9 +23,13 @@ a) puzzle constitué s'affiché sans modele
 b) fissure et se mélange tombre vers le bas ou autour du tapis
 c) le modèle s'affiche avc possibilité de le déplacer ? masquer/réafficher ?
 
+accessibilité 
+https://www.joshwcomeau.com/blog/hands-free-coding/
+
 anim fin) confetti ?
 
 arrosage spirale : https://codepen.io/hakimel/pen/aIhkf
+    https://codepen.io/danwilson/pen/ybLrWe
 pieces disposées en cubes imbriquées et tournants : https://webkit.org/blog-files/3d-transforms/morphing-cubes.html
 étaler sur le tapis avec  une impression de vague : https://codepen.io/hakimel/pen/vDnmp
 chaque piece réduise de taille et se raprochent pour faire une forme
@@ -56,7 +64,7 @@ var gridSize = 4,
     tapis, nbPiece,
     puzzleHeight = 300,
     puzzleWidth = 300, // @todo : ajust with screen size
-    pWidth, pHeight,
+    pWidth, pHeight, pWidth2, pHeight2,
     pWidth10, pHeight10,
     svgWidth, svgHeight,
     dragAgregatNo, dragAgregated, draggedPieceNo, draggedPiece, zIndex = 0,
@@ -90,9 +98,7 @@ class Emplacement { // pieces are not regrouped in one, but moved together
                     svg: svg, // fixed
                     x: x,
                     y: y,
-                    voisins: voisins, // pieces voisines du puzzle mis à jours après agrégation. une pièce ne peut etre dans l'agrégat ET dans voisin !
-                    left: numLeft(svg), // mis à jour à chaque évaluation
-                    top: numTop(svg),
+                    voisins: voisins, // pieces voisines du puzzle mis à jours après agrégation. une pièce ne peut etre dans l'agrégat ET dans voisin ! ????
                     agregatNo: position, // agrégat mis à jour à chaque intégration dans un agrégat
                     agregated: [position],
                     agregatVoisins: [...voisins] // pour éviter de pointer sur l'array de voisins
@@ -101,60 +107,55 @@ class Emplacement { // pieces are not regrouped in one, but moved together
         }
     }
 
-    dragStart(zindex) {
-        draggedPieceNo = parseInt(draggedPiece.getAttribute("position"), 10)
+    dragAgregatZindex(zindex) {
+        // set draggedPieceNo, dragAgregatNo, dragAgregated
         dragAgregatNo = this.emplacement[draggedPieceNo].agregatNo
         dragAgregated = this.emplacement[dragAgregatNo].agregated
+            // set dragAgregated pieces z-index to top
         dragAgregated.forEach(pieceNo => {
             this.emplacement[pieceNo].svg.style.zIndex = zindex
         })
     }
 
-    drag(left, top) {
-        this.setSvgLeftTop(dragAgregatNo, left - numLeft(draggedPiece), top - numTop(draggedPiece))
-    }
-
-    setSvgLeftTop(pieceNo, deltaLeft, deltaTop) { // Déplacement des svg avec la souris ou touch
+    deplacerAgregat(pieceNo, deltaLeft, deltaTop) { // Déplacement des svg avec la souris ou touch
+        for (let p of this.emplacement[pieceNo].agregated) {
+            let svgStyle = this.emplacement[p].svg.style
+                // console.log("check deplacer p:" + p + "=" + svgStyle.left + " " + svgStyle.top + " delta:" + deltaLeft + " " + deltaTop)
+            if (parseInt(svgStyle.left) + deltaLeft < 0 || parseInt(svgStyle.top) + deltaTop < 0) {
+                return // block mouvement
+            }
+        }
         this.emplacement[pieceNo].agregated.forEach(p => {
-            let svg = this.emplacement[p].svg;
-            svg.style.left = (deltaLeft + numLeft(svg)) + "px"
-            svg.style.top = (deltaTop + numTop(svg)) + "px"
+            // let svg = this.emplacement[p].svg
+            let svgStyle = this.emplacement[p].svg.style
+                // console.log("deplacer p:" + p + "=" + svgStyle.left + " " + svgStyle.top + " delta:" + deltaLeft + " " + deltaTop)
+            svgStyle.left = (parseInt(svgStyle.left) + deltaLeft) + "px"
+            svgStyle.top = (parseInt(svgStyle.top) + deltaTop) + "px"
+                // let left = parseInt(svgStyle.left),
+                //     top = parseInt(svgStyle.top);
+                // svgStyle.left = (left + (left < 0 ? -deltaLeft : deltaLeft)) + "px"
+                // svgStyle.top = (top + (top < 0 ? -deltaTop : deltaTop)) + "px"
         })
     }
 
-    setLeftTop(pieceNo, deltaLeft, deltaTop) { // maj left et top de chaque piece de l'agrégat déplacé
-        this.emplacement[pieceNo].agregated.forEach(p => {
-            this.emplacement[p].left += deltaLeft
-            this.emplacement[p].top += deltaTop
-        })
-    }
-
-    dragEnd(left, top) {
-        let deltaLeft = left - this.emplacement[draggedPieceNo].left,
-            deltaTop = top - this.emplacement[draggedPieceNo].top;
-
-        // maj left et top de chaque piece de l'agrégat déplacé
-        this.setLeftTop(dragAgregatNo, deltaLeft, deltaTop)
-
+    dragEnd() {
         let voisinsAgregatEvaluated = [],
             toAjdustAgregated = [],
             gapLeft,
             gapTop;
 
-        // évaluer la distance des voisines de l'agregat de la piece déplacée 
-        // Pour chaque voisin de l'agregat drag
+        // évaluer la distance de chaque voisin de l'agregat déplacé 
         this.emplacement[dragAgregatNo].agregatVoisins.forEach(voisinNo => {
-
-            let voisinAgregatNo = this.emplacement[voisinNo].agregatNo
+            let voisinAgregatNo = this.emplacement[voisinNo].agregatNo // agrégat du voisin
 
             if (voisinsAgregatEvaluated.indexOf(voisinAgregatNo) < 0) { // agrégat du voisin n'a pas déjà été évalué  
                 voisinsAgregatEvaluated.push(voisinAgregatNo)
 
-                //  premiere pièce de l'agrétat voisin de firstVoisinNo  (1 seul suffit)
+                //  l'évaluation de la distance avec 1 pièce de l'agrétat déplacé suffit
                 let dragNo = this.emplacement[voisinNo].voisins.find(p => { return dragAgregated.indexOf(p) >= 0 })
 
-                let dragged = this.emplacement[dragNo],
-                    voisin = this.emplacement[voisinNo];
+                let dragged = { 'left': this.pieceNoNumLeft(dragNo), 'top': this.pieceNoNumTop(dragNo), 'x': this.emplacement[dragNo].x, 'y': this.emplacement[dragNo].y }
+                let voisin = { 'left': this.pieceNoNumLeft(voisinNo), 'top': this.pieceNoNumTop(voisinNo), 'x': this.emplacement[voisinNo].x, 'y': this.emplacement[voisinNo].y }
 
                 gapLeft = dragged.left - (voisin.left + pWidth * (dragged.x == voisin.x ? 0 : (dragged.x > voisin.x ? 1 : -1)))
                 gapTop = dragged.top - (voisin.top + pHeight * (dragged.y == voisin.y ? 0 : (dragged.y > voisin.y ? 1 : -1)));
@@ -166,15 +167,12 @@ class Emplacement { // pieces are not regrouped in one, but moved together
         });
 
         if (toAjdustAgregated) {
-            // maj left et top de chaque piece de l'agrégat déplacé
+            // ajuster left et top des pièces rejoints 
+            // @todo ajuster déplacés ou rejoints (si plusieurs rejoints) ou fonction nb pieces
             toAjdustAgregated.forEach(g => {
-
                 this.agreger(g.voisinAgregatNo)
-
-                this.setLeftTop(g.voisinAgregatNo, g.gapLeft, g.gapTop)
-                this.setSvgLeftTop(g.voisinAgregatNo, g.gapLeft, g.gapTop)
+                this.deplacerAgregat(g.voisinAgregatNo, g.gapLeft, g.gapTop)
             })
-
             return this.success()
         }
     }
@@ -191,15 +189,18 @@ class Emplacement { // pieces are not regrouped in one, but moved together
 
         // Ajouter nouveaux voisins  
         this.emplacement[voisinAgregatNo].agregatVoisins.forEach(v => {
-            if (this.emplacement[dragAgregatNo].agregatVoisins.indexOf(v) < 0) { // sans doublons 
-                this.emplacement[dragAgregatNo].agregatVoisins.push(v);
-            }
-        })
+                if (this.emplacement[dragAgregatNo].agregatVoisins.indexOf(v) < 0) { // sans doublons 
+                    this.emplacement[dragAgregatNo].agregatVoisins.push(v);
+                }
+            })
+            // console.log("Ajouter nouveaux voisins " + this.emplacement[dragAgregatNo].agregatVoisins.reduce((a, v) => { return a + "," + v }))
 
         // Retirer voisins intégrés
         this.emplacement[dragAgregatNo].agregatVoisins = this.emplacement[dragAgregatNo].agregatVoisins.filter(v => {
-            return this.emplacement[dragAgregatNo].agregated.indexOf(v) < 0
-        })
+                return this.emplacement[dragAgregatNo].agregated.indexOf(v) < 0
+            })
+            // console.log("Retirer voisins intégrés " + (this.emplacement[dragAgregatNo].agregatVoisins.length > 0 ? this.emplacement[dragAgregatNo].agregatVoisins.reduce((a, v) => { return a + "," + v }) : ""))
+
     }
 
     success() {
@@ -210,13 +211,15 @@ class Emplacement { // pieces are not regrouped in one, but moved together
         }
         return true
     }
+
+    pieceNoNumLeft(pieceNo) { return parseInt(this.emplacement[pieceNo].svg.style.left); }
+
+    pieceNoNumTop(pieceNo) { return parseInt(this.emplacement[pieceNo].svg.style.top); }
+
 }
 
-function numLeft(elem) { return parseInt(elem.style.left, 10); }
+// function numZindex(elem) { return parseInt(elem.style.zIndex); }
 
-function numZindex(elem) { return parseInt(elem.style.zIndex, 10); }
-
-function numTop(elem) { return parseInt(elem.style.top, 10); }
 
 async function nouvelleImage() {
     document.querySelectorAll(".taille").forEach(elem => elem.addEventListener("change", changerNiveau));
@@ -256,13 +259,11 @@ async function chargerPuzzle() {
         tapis.removeChild(tapis.firstChild);
     }
 
-
     slice();
 
-    shuffle()
+    // shuffle()
 
     emplacement = new Emplacement();
-    // console.log(emplacement);
 
     function slice() {
         // width and height ratio
@@ -276,6 +277,8 @@ async function chargerPuzzle() {
         pHeight = Math.floor(puzzleHeight / gridSize);
         pWidth10 = Math.floor(pWidth / 10)
         pHeight10 = Math.floor(pHeight / 10)
+        pWidth2 = Math.floor(pWidth / 2)
+        pHeight2 = Math.floor(pHeight / 2)
 
         initShapeSet();
 
@@ -382,22 +385,22 @@ function createsvgpath(x, y) {
 
 
     /*
-    invisble area not clickable :
-    <svg width="103px" height="156px" viewBox="-14 -22 104 157" position="0" style="left: 208px; top: 8px;">
-    <clipPath id="path_0_0b">
-        <path d="M0.5,0.5H75.5L75.5,33.5S75.....5,112.5,21.5,112.5L0.5,112.5Z"></path>
-    </clipPath>
+        invisble area not clickable :
+        <svg width="103px" height="156px" viewBox="-14 -22 104 157" position="0" style="left: 208px; top: 8px;">
+        <clipPath id="path_0_0b">
+            <path d="M0.5,0.5H75.5L75.5,33.5S75.....5,112.5,21.5,112.5L0.5,112.5Z"></path>
+        </clipPath>
     
-    <g class="gbordure">    <rect clip-path="url(#path_0_0b)" width="1080px" height="1618px" fill="#1D0F4E"></rect> </g>
-    ou
-      <rect width="103px" height="156px" fill="black"></rect>
+        <g class="gbordure">    <rect clip-path="url(#path_0_0b)" width="1080px" height="1618px" fill="#1D0F4E"></rect> </g>
+        ou
+          <rect width="103px" height="156px" fill="black"></rect>
 
-    <use xlink:href="#imgmodele" clip-path="url(#path_0_0b)"></use></svg>
+        <use xlink:href="#imgmodele" clip-path="url(#path_0_0b)"></use></svg>
 
-    +
-    svg[position="0"] {   clip-path: url(#path_0_0);}
+        +
+        svg[position="0"] {   clip-path: url(#path_0_0);}
 
-    */
+        */
 
     let newClipPath = document.createElementNS("http://www.w3.org/2000/svg", "clipPath");
     // let newClipPath = document.createElementNS("http://www.w3.org/2000/svg", "mask");
@@ -520,7 +523,6 @@ function draggable(newSvg) {
         //  https://www.petercollingridge.co.uk/tutorials/svg/interactive/dragging/ 
         // https://www.wikimass.com/js/mouseevent-properties
         // https://developer.mozilla.org/en-US/docs/Web/CSS/pointer-events
-
         evt.preventDefault();
 
         //todo drag de plusieurs pièces en même temps
@@ -530,13 +532,15 @@ function draggable(newSvg) {
         let x = evt.clientX
         let y = evt.clientY
 
+        // message.innerHTML = "startDrag elementFromPoint:" + document.elementFromPoint(x, y).parentNode;
         // console.log("startDrag draggedPiece:" + evt.target.nodeName + " : " + x + "," + y)
         draggedPiece = evt.target.parentNode; // svg de Use
+        draggedPieceNo = parseInt(draggedPiece.getAttribute("position"))
 
-        emplacement.dragStart(++zIndex)
+        offset.x = x - emplacement.pieceNoNumLeft(draggedPieceNo)
+        offset.y = y - emplacement.pieceNoNumTop(draggedPieceNo)
 
-        offset.x = x - numLeft(draggedPiece)
-        offset.y = y - numTop(draggedPiece)
+        emplacement.dragAgregatZindex(++zIndex)
             // console.log("startDrag pret  position :" + draggedPiece.getAttribute("position"))
     }
 
@@ -544,9 +548,41 @@ function draggable(newSvg) {
         evt.preventDefault();
         if (evt.changedTouches) evt = evt.changedTouches[0];
         if (evt.touches) evt = evt.touches[0];
-
+        // message.innerHTML = "drag: touches" + evt.changedTouches.length + " evt.client:" + evt.clientX + "," + evt.clientY + "  offset:" + offset.x + "," + offset.y
+        // message.innerHTML = "drag: e.client:" + evt.clientX + "," + evt.clientY + "  offset:" + offset.x + "," + offset.y
         if (draggedPiece) {
-            emplacement.drag(evt.clientX - offset.x, evt.clientY - offset.y)
+            // emplacement.drag(evt.clientX - offset.x, evt.clientY - offset.y)
+            let deltaLeft = evt.clientX - offset.x - emplacement.pieceNoNumLeft(draggedPieceNo)
+            let deltaTop = evt.clientY - offset.y - emplacement.pieceNoNumTop(draggedPieceNo)
+
+            let msg = "" + deltaLeft + "," + deltaTop + " "
+            if (deltaLeft > 10) {
+                msg += ", x>10:" + deltaLeft
+                deltaLeft += offset.x > pWidth2 ? 5 : -5;
+                msg += "->" + deltaLeft
+            } else {
+                if (deltaLeft < -10) {
+                    msg += ", x<-10:" + deltaLeft
+                    deltaLeft += offset.x > pWidth2 ? -5 : 5;
+                    msg += "->" + deltaLeft
+                }
+            }
+            if (deltaTop > 10) {
+                msg += ", x>10:" + deltaTop
+                deltaTop += (offset.x > pHeight2 ? 5 : -5)
+                msg += "->" + deltaTop
+            } else {
+                if (deltaTop < -10) {
+                    msg += ", x<-10:" + deltaTop
+                    deltaTop += offset.x > pHeight2 ? -5 : 5;
+                    msg += "->" + deltaTop
+                }
+            }
+            // message.innerHTML = "drag: e.client:" + evt.clientX + "," + evt.clientY + "  offset:" + offset.x + "," + offset.y +
+            //     ", delta:" + deltaLeft + "," + deltaTop
+            // console.log("delta:" + msg + ", clientXY:" + evt.clientX + "," + evt.clientY + ", pageXY:" + evt.pageX + "," + evt.pageY + "  offset:" + offset.x + "," + offset.y)
+
+            emplacement.deplacerAgregat(dragAgregatNo, deltaLeft, deltaTop)
         }
     }
 
@@ -572,7 +608,8 @@ function draggable(newSvg) {
 
         if (draggedPiece) {
             // cherche piece voisine à proximité à agréger (et qui n'est pas déjà dans l'agrégat déplacé)
-            if (emplacement.dragEnd(evt.clientX - offset.x, evt.clientY - offset.y)) {
+            // if (emplacement.dragEnd(evt.clientX - offset.x, evt.clientY - offset.y)) {
+            if (emplacement.dragEnd()) {
                 success()
             }
             draggedPiece = null;
@@ -630,4 +667,7 @@ function sound() {
     o.stop(0.5)
 }
 
+function getPositionX(event) {
+    return event.type.includes('mouse') ? event.pageX : event.touches[0].clientX;
+}
 document.addEventListener("DOMContentLoaded", nouvelleImage);
