@@ -559,8 +559,8 @@ function draggable(newSvg) {
 
             start p2 2 touch 1 change,     drag p1 
         */
-        // let touches = evtp.type.includes('mouse') ? [evtp] : evtp.changedTouches ? evtp.changedTouches : [];
-        let touches = evtp.type.includes('mouse') ? [evtp] : evtp.touches ? evtp.touches : [];
+        let touches = evtp.type.includes('mouse') ? [evtp] : evtp.changedTouches ? evtp.changedTouches : [];
+        // let touches = evtp.type.includes('mouse') ? [evtp] : evtp.touches ? evtp.touches : [];
 
         for (let evt of touches) {
             let x = evt.clientX
@@ -606,14 +606,14 @@ function draggable(newSvg) {
         evtp.preventDefault();
         // if (evt.changedTouches) evt = evt.changedTouches[0];
         // if (evt.touches) evt = evt.touches[0];
-        // let touches = evtp.type.includes('mouse') ? [evtp] : evtp.touches ? evtp.touches : [];
-        let touches = evtp.type.includes('mouse') ? [evtp] : evtp.changedTouches ? evtp.changedTouches : [];
+        let touches = evtp.type.includes('mouse') ? [evtp] : evtp.touches ? evtp.touches : [];
+        // let touches = evtp.type.includes('mouse') ? [evtp] : evtp.changedTouches ? evtp.changedTouches : [];
         for (let evt of touches) {
 
             // message.innerHTML = "drag: touches" + evt.changedTouches.length + " evt.client:" + evt.clientX + "," + evt.clientY + "  offset:" + offset.x + "," + offset.y
             // message.innerHTML = "drag: e.client:" + evt.clientX + "," + evt.clientY + "  offset:" + offset.x + "," + offset.y
-            let draggedPiece = draggedPieces.find(p => { return p.touchId == (evt.identifier ? evt.identifier : 1) })
-
+            let touchId = (evt.identifier ? evt.identifier : 1)
+            let draggedPiece = draggedPieces.find(p => { return p.touchId == touchId })
             if (draggedPiece) {
                 let offset = draggedPiece.offset,
                     draggedPieceNo = draggedPiece.draggedPieceNo,
