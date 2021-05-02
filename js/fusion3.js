@@ -586,14 +586,15 @@ function draggable(newSvg) {
             }
             draggedPieces.push(draggedPiece)
 
-            let msg = ""
+            let msg = draggedPieceNo + "-" + draggedPiece.touchId + "/" + draggedPieces.length
             if (evtp.touches) {
-                msg = evtp.changedTouches.length + " changedTouches id:"
+                msg += ", " + evtp.changedTouches.length + " changedTouches id:"
                 for (let c of evtp.changedTouches) { msg += " " + c.identifier }
-                msg += evtp.touches.length + " touches id:"
+                msg += ", " + evtp.touches.length + " touches id:"
                 for (let t of evtp.touches) { msg += " " + t.identifier }
             }
-            message.innerHTML += "<br/>START" + msg + " p" + draggedPieceNo + "-" + draggedPiece.touchId + " " + draggedPieces.length + " ps. ";
+
+            message.innerHTML += "<br/>START P" + msg;
             debugmessage = ""
 
             emplacement.dragAgregatZindex(draggedPiece)
@@ -618,18 +619,16 @@ function draggable(newSvg) {
                     draggedPieceNo = draggedPiece.draggedPieceNo,
                     dragAgregatNo = draggedPiece.dragAgregatNo
 
-                let msg = ""
+                let msg = draggedPieceNo + "-" + draggedPiece.touchId + "/" + draggedPieces.length
                 if (evtp.touches) {
-                    msg = evtp.changedTouches.length + " changedTouches id:"
+                    msg += ", " + evtp.changedTouches.length + " changedTouches id:"
                     for (let c of evtp.changedTouches) { msg += " " + c.identifier }
-                    msg += evtp.touches.length + " touches id:"
+                    msg += ", " + evtp.touches.length + " touches id:"
                     for (let t of evtp.touches) { msg += " " + t.identifier }
                 }
 
-                msg += " P" + draggedPieceNo + "-" + draggedPiece.touchId + " " + draggedPieces.length + " ps. "
-
                 if (debugmessage != msg) {
-                    message.innerHTML += "<br/>DRAG p" + msg;
+                    message.innerHTML += "<br/>DRAG P" + msg;
                     debugmessage = msg // global var to avoid print multiple time same information
                 }
 
