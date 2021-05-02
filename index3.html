@@ -59,7 +59,6 @@
                   <div class="button"><span></span></div>
                 </label>
 
-                <label id="message"></label>
             </div>
             <form id="choixImage">
                 <span id="results">
@@ -76,9 +75,13 @@
                 <input class="taille" type="radio" name="level" value="4" checked="checked">Normal (4x4)
                 <input class="taille" type="radio" name="level" value="6">Difficile (6x6)
             </div>
+
         </div>
         <div id="tapis"></div>
         <div><img id="modele" alt="full image"></div>
+    </div>
+    <div>
+        <button onclick='document.querySelector("#message").innerHTML=""'>Effacer message</button><label id="message"></label>
     </div>
 </body>
 

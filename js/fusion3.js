@@ -1,15 +1,20 @@
 /* @todo
 
+multi touche :  2eme touche ramene la premiere piece sous le second doigt
 
-touch : gérer plusieurs touches simultanées
+animer le morcellemnt de l'image puis le mélange des pièces
+m
+occuper tout l'espace de l'écran
+
+a tester sur mobile  touch : gérer plusieurs touches simultanées
     https://developer.mozilla.org/en-US/docs/Web/API/Document/elementFromPoint
     http://www.javascriptkit.com/javatutors/touchevents.shtml
 
 
 piece border
 
+pas terrible :
 déplacement rapide perd la piece => acceleration ou positionner/rapprocher  centre piece sous la souris
-reduce emplacement use (double storage with dom element )
 
 cookies setting : SameSite=Lax : 
 
@@ -45,10 +50,14 @@ https://developer.mozilla.org/en-US/
 https://ishadeed.com/article/say-hello-to-css-container-queries/
 https://codepen.io/HunorMarton/pen/PoGbgqj
 https://bashooka.com/
+framework
+    https://github.com/pixijs/pixi.js : HTML5 Creation Engine: Create beautiful digital content with the fastest, most flexible 2D WebGL renderer
 
 fun
 - cube pack https://codepen.io/davidkpiano/pen/aqNZxX
 - photo tear : https://codepen.io/ste-vg/pen/rNjOgYv
+water effect : https://codepen.io/ge1doot/pen/VYXGoo (cliquable)
+water ripple : https://codepen.io/al-ro/details/NjOrPV (cliquable)
 text blinker : https://codepen.io/RoryGrenade/pen/XbeGZr
 - animation de fin
 - chnagement d'image slider
@@ -76,6 +85,7 @@ const pathIsAbsolu = false; // true ko : todo Génération Clip-Path absolu à r
 var pathX, pathY; // pour construire forme puzzle 
 // var normalDrag = true; // set to false when drag piece under svg with masked zone
 var message;
+var debugmessage = "";
 var PuzzleShapeBorders = [];
 // var vitesseX, vitesseY;
 
@@ -564,6 +574,7 @@ function draggable(newSvg) {
             // console.log("startDrag draggedPiece:" + evt.target.nodeName + " : " + x + "," + y)
             let svg = evt.target.parentNode; // svg de Use
             let draggedPieceNo = parseInt(svg.getAttribute("position"))
+
             let offset = {
                 x: x - emplacement.pieceNoNumLeft(draggedPieceNo),
                 y: y - emplacement.pieceNoNumTop(draggedPieceNo)
@@ -578,6 +589,8 @@ function draggable(newSvg) {
                 touchId: (evt.identifier ? evt.identifier : 1)
             }
             draggedPieces.push(draggedPiece)
+
+            message.innerHTML += "<br/>START p" + draggedPieceNo + "-" + draggedPiece.touchId + " " + (evtp.touches ? evtp.touches.length + " touch, " : "") + (evtp.changedTouches ? evtp.changedTouches.length + " change " : "") + draggedPieces.length + " ps. ";
 
             emplacement.dragAgregatZindex(draggedPiece)
                 // console.log("startDrag pret  position :" + draggedPiece.getAttribute("position"))
@@ -600,13 +613,18 @@ function draggable(newSvg) {
                 let offset = draggedPiece.offset,
                     draggedPieceNo = draggedPiece.draggedPieceNo,
                     dragAgregatNo = draggedPiece.dragAgregatNo
+                let msg = draggedPieceNo + "-" + draggedPiece.touchId + " " + (evtp.touches ? evtp.touches.length + " touch, " : "") + (evtp.changedTouches ? evtp.changedTouches.length + " change " : "") + draggedPieces.length + " ps. "
 
+                if (debugmessage != msg) {
+                    message.innerHTML += "<br/>drap p" + msg;
+                    debugmessage = msg
+                }
 
                 // emplacement.drag(evt.clientX - offset.x, evt.clientY - offset.y)
                 let deltaLeft = evt.clientX - offset.x - emplacement.pieceNoNumLeft(draggedPieceNo)
                 let deltaTop = evt.clientY - offset.y - emplacement.pieceNoNumTop(draggedPieceNo)
 
-                let msg = "" + deltaLeft + "," + deltaTop + " "
+                msg = "" + deltaLeft + "," + deltaTop + " "
                 if (deltaLeft > 10) {
                     msg += ", x>10:" + deltaLeft
                     deltaLeft += offset.x > pWidth2 ? 5 : -5;
