@@ -591,6 +591,7 @@ function draggable(newSvg) {
             draggedPieces.push(draggedPiece)
 
             message.innerHTML += "<br/>START p" + draggedPieceNo + "-" + draggedPiece.touchId + " " + (evtp.touches ? evtp.touches.length + " touch, " : "") + (evtp.changedTouches ? evtp.changedTouches.length + " change " : "") + draggedPieces.length + " ps. ";
+            debugmessage = ""
 
             emplacement.dragAgregatZindex(draggedPiece)
                 // console.log("startDrag pret  position :" + draggedPiece.getAttribute("position"))
