@@ -565,7 +565,9 @@ function draggable(newSvg) {
         // if (evt.changedTouches) evt = evt.changedTouches[0];
         // if (evt.touches) evt = evt.touches[0];
 
-        let touches = evtp.type.includes('mouse') ? [evtp] : evtp.changedTouches ? evtp.changedTouches : [];
+        // let touches = evtp.type.includes('mouse') ? [evtp] : evtp.changedTouches ? evtp.changedTouches : [];
+        let touches = evtp.type.includes('mouse') ? [evtp] : evtp.touches ? evtp.touches : [];
+
         for (let evt of touches) {
             let x = evt.clientX
             let y = evt.clientY
@@ -586,9 +588,13 @@ function draggable(newSvg) {
                 offset: offset,
                 dragAgregatNo: null,
                 dragAgregated: null,
-                touchId: (evt.identifier ? evt.identifier : 1)
+                touchId: (evt.identifier ? evt.identifier : draggedPieces.length + 1)
             }
             draggedPieces.push(draggedPiece)
+
+
+            for (let c of evtp.changedTouches) { message.innerHTML += "<br/>START changedTouches id:" + c.identifier }
+            for (let t of evtp.touches) { message.innerHTML += "<br/>START touches id:" + t.identifier }
 
             message.innerHTML += "<br/>START p" + draggedPieceNo + "-" + draggedPiece.touchId + " " + (evtp.touches ? evtp.touches.length + " touch, " : "") + (evtp.changedTouches ? evtp.changedTouches.length + " change " : "") + draggedPieces.length + " ps. ";
             debugmessage = ""
@@ -602,9 +608,9 @@ function draggable(newSvg) {
         evtp.preventDefault();
         // if (evt.changedTouches) evt = evt.changedTouches[0];
         // if (evt.touches) evt = evt.touches[0];
-        let touches = evtp.type.includes('mouse') ? [evtp] : evtp.touches ? evtp.touches : [];
+        // let touches = evtp.type.includes('mouse') ? [evtp] : evtp.touches ? evtp.touches : [];
+        let touches = evtp.type.includes('mouse') ? [evtp] : evtp.changedTouches ? evtp.changedTouches : [];
         for (let evt of touches) {
-
 
             // message.innerHTML = "drag: touches" + evt.changedTouches.length + " evt.client:" + evt.clientX + "," + evt.clientY + "  offset:" + offset.x + "," + offset.y
             // message.innerHTML = "drag: e.client:" + evt.clientX + "," + evt.clientY + "  offset:" + offset.x + "," + offset.y
@@ -614,11 +620,18 @@ function draggable(newSvg) {
                 let offset = draggedPiece.offset,
                     draggedPieceNo = draggedPiece.draggedPieceNo,
                     dragAgregatNo = draggedPiece.dragAgregatNo
-                let msg = draggedPieceNo + "-" + draggedPiece.touchId + " " + (evtp.touches ? evtp.touches.length + " touch, " : "") + (evtp.changedTouches ? evtp.changedTouches.length + " change " : "") + draggedPieces.length + " ps. "
+
+                let msg = "<br/>DRAG changedTouches id:"
+                for (let c of evtp.changedTouches) { msg += " " + c.identifier }
+                msg += "DRAG touches id:"
+                for (let t of evtp.touches) { msg += " " + t.identifier }
+                msg += " P"
+
+                msg += draggedPieceNo + "-" + draggedPiece.touchId + " " + (evtp.touches ? evtp.touches.length + " touch, " : "") + (evtp.changedTouches ? evtp.changedTouches.length + " change " : "") + draggedPieces.length + " ps. "
 
                 if (debugmessage != msg) {
                     message.innerHTML += "<br/>drap p" + msg;
-                    debugmessage = msg
+                    debugmessage = msg // global var to avoid print multiple time same information
                 }
 
                 // emplacement.drag(evt.clientX - offset.x, evt.clientY - offset.y)
