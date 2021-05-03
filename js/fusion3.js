@@ -1,15 +1,9 @@
 /* @todo
 
-multi touche :  2eme touche ramene la premiere piece sous le second doigt
 
 animer le morcellemnt de l'image puis le mélange des pièces
 m
 occuper tout l'espace de l'écran
-
-a tester sur mobile  touch : gérer plusieurs touches simultanées
-    https://developer.mozilla.org/en-US/docs/Web/API/Document/elementFromPoint
-    http://www.javascriptkit.com/javatutors/touchevents.shtml
-
 
 piece border
 
@@ -76,18 +70,14 @@ var gridSize = 4,
     pWidth, pHeight, pWidth2, pHeight2,
     pWidth10, pHeight10,
     svgWidth, svgHeight,
-    // dragAgregatNo, dragAgregated, draggedPieceNo, draggedPiece, 
     zIndex = 0,
     draggedPieces = [],
-    // offset = { x: 0, y: 0 },
     emplacement;
 const pathIsAbsolu = false; // true ko : todo Génération Clip-Path absolu à revoir
 var pathX, pathY; // pour construire forme puzzle 
-// var normalDrag = true; // set to false when drag piece under svg with masked zone
 var message;
-var debugmessage = "";
+// var debugmessage = ""; // utilisé pour debug dragstart et drag
 var PuzzleShapeBorders = [];
-// var vitesseX, vitesseY;
 
 class Emplacement { // pieces are not regrouped in one, but moved together
     constructor() {
@@ -149,7 +139,7 @@ class Emplacement { // pieces are not regrouped in one, but moved together
         })
     }
 
-    dragEnd(draggedPiece) {
+    acollerVoisins(draggedPiece) {
         let voisinsAgregatEvaluated = [],
             toAjdustAgregated = [],
             gapLeft,
@@ -157,17 +147,8 @@ class Emplacement { // pieces are not regrouped in one, but moved together
 
         let dragAgregatNo = draggedPiece.dragAgregatNo,
             dragAgregated = draggedPiece.dragAgregated
-            /*
-                    let draggedPiece = {
-                        draggedSvg: svg,
-                        draggedPieceNo: draggedPieceNo,
-                        offset: offset,
-                        dragAgregatNo: null,
-                        dragAgregated: null,
-                        touchId: evt.identifier
-                    }
-            */
-            // évaluer la distance de chaque voisin de l'agregat déplacé 
+
+        // évaluer la distance de chaque voisin de l'agregat déplacé 
         this.emplacement[dragAgregatNo].agregatVoisins.forEach(voisinNo => {
             let voisinAgregatNo = this.emplacement[voisinNo].agregatNo // agrégat du voisin
 
@@ -545,128 +526,93 @@ function draggable(newSvg) {
         // newSvg.addEventListener("touchcancel", endDrag, false);
     }
 
+    function touchTdentifier(evt) { return evt.identifier !== undefined ? evt.identifier : 999 }
+
     function startDrag(evtp) {
-        //  https://www.petercollingridge.co.uk/tutorials/svg/interactive/dragging/ 
+        // https://www.petercollingridge.co.uk/tutorials/svg/interactive/dragging/ 
         // https://www.wikimass.com/js/mouseevent-properties
         // https://developer.mozilla.org/en-US/docs/Web/CSS/pointer-events
         evtp.preventDefault();
-        //todo drag de plusieurs pièces en même temps
-        // if (evt.changedTouches) evt = evt.changedTouches[0];
-        // if (evt.touches) evt = evt.touches[0];
-        /*
-        ano smartphone 02 mai :
-            start p1 ,  1 change id=0,     1 touch id=0
 
-            start p2 , 1 change id=1,    2 touch id=0,1
-        */
+        // debugmessage = ""
+        // let msg = ""
+        // if (evtp.changedTouches) {
+        //     msg = evtp.changedTouches.length + " changedTouches id("
+        //     for (let c of evtp.changedTouches) { msg += " " + c.identifier }
+        //     msg += "),    " + evtp.touches.length + " touches id("
+        //     for (let t of evtp.touches) { msg += " " + t.identifier }
+        //     msg += "),    " + draggedPieces.length + " draggedPieces"
+        // }
+        // message.innerHTML += "<br/>START " + msg;
+
         let contacts = evtp.changedTouches ? evtp.changedTouches : [evtp];
-        // let contacts = evtp.type.includes('mouse') ? [evtp] : evtp.touches ? evtp.touches : [];
-
-        debugmessage = ""
-        let msg = ""
-        if (evtp.changedTouches) {
-            msg = evtp.changedTouches.length + " changedTouches id("
-            for (let c of evtp.changedTouches) { msg += " " + c.identifier }
-            msg += "),    " + evtp.touches.length + " touches id("
-            for (let t of evtp.touches) { msg += " " + t.identifier }
-            msg += "),    " + draggedPieces.length + " draggedPieces"
-        }
-        message.innerHTML += "<br/>START " + msg;
-
         for (let evt of contacts) {
-            let touchId = (evt.identifier !== undefined ? evt.identifier : 999)
-            let x = evt.clientX
-            let y = evt.clientY
-
-            // message.innerHTML = "startDrag elementFromPoint:" + document.elementFromPoint(x, y).parentNode;
-            // console.log("startDrag draggedPiece:" + evt.target.nodeName + " : " + x + "," + y)
-            let svg = evt.target.parentNode; // svg de Use
-            let draggedPieceNo = parseInt(svg.getAttribute("position"))
-
-            let offset = {
-                x: x - emplacement.pieceNoNumLeft(draggedPieceNo),
-                y: y - emplacement.pieceNoNumTop(draggedPieceNo)
-            }
-
+            let draggedPieceNo = parseInt(evt.target.parentNode.getAttribute("position"))
             let draggedPiece = {
-                draggedSvg: svg,
-                draggedPieceNo: draggedPieceNo,
-                offset: offset,
-                dragAgregatNo: null,
-                dragAgregated: null,
-                touchId: touchId
-            }
+                    draggedSvg: evt.target.parentNode, // svg de Use
+                    draggedPieceNo: draggedPieceNo,
+                    offset: {
+                        x: evt.clientX - emplacement.pieceNoNumLeft(draggedPieceNo),
+                        y: evt.clientY - emplacement.pieceNoNumTop(draggedPieceNo)
+                    },
+                    dragAgregatNo: null,
+                    dragAgregated: null,
+                    touchId: touchTdentifier(evt)
+                }
+                // message.innerHTML += ",    P" + draggedPieceNo + "(" + draggedPiece.touchId + ")"
             draggedPieces.push(draggedPiece)
-
-            message.innerHTML += ",    P" + draggedPieceNo + "(" + draggedPiece.touchId + ")"
-
             emplacement.dragAgregatZindex(draggedPiece)
-                // console.log("startDrag pret  position :" + draggedPiece.getAttribute("position"))
         }
     }
 
     function drag(evtp) {
         evtp.preventDefault();
-        // if (evt.changedTouches) evt = evt.changedTouches[0];
-        // if (evt.touches) evt = evt.touches[0];
         let contacts = evtp.touches ? evtp.touches : [evtp];
 
-        // let contacts = evtp.type.includes('mouse') ? [evtp] : evtp.changedTouches ? evtp.changedTouches : [];
-
-        let msg1 = ""
-        if (evtp.touches) {
-            msg1 = evtp.changedTouches.length + " changedTouches id("
-            for (let c of evtp.changedTouches) { msg1 += " " + c.identifier }
-            msg1 += "),    " + evtp.touches.length + " touches id("
-            for (let t of evtp.touches) { msg1 += " " + t.identifier }
-            msg1 += "),    " + draggedPieces.length + " draggedPieces"
-        }
-        // message.innerHTML += "<br/>DRAG " + msg1;        
+        // let msg1 = ""
+        // if (evtp.touches) {
+        //     msg1 = evtp.changedTouches.length + " changedTouches id("
+        //     for (let c of evtp.changedTouches) { msg1 += " " + c.identifier }
+        //     msg1 += "),    " + evtp.touches.length + " touches id("
+        //     for (let t of evtp.touches) { msg1 += " " + t.identifier }
+        //     msg1 += "),    " + draggedPieces.length + " draggedPieces"
+        // }
 
         for (let evt of contacts) {
 
-            // message.innerHTML = "drag: touches" + evt.changedTouches.length + " evt.client:" + evt.clientX + "," + evt.clientY + "  offset:" + offset.x + "," + offset.y
-            // message.innerHTML = "drag: e.client:" + evt.clientX + "," + evt.clientY + "  offset:" + offset.x + "," + offset.y
-            let touchId = (evt.identifier !== undefined ? evt.identifier : 999)
-
+            let touchId = touchTdentifier(evt)
 
             let draggedPiece = draggedPieces.find(p => { return p.touchId == touchId })
             if (draggedPiece) {
-                let msg2 = draggedPiece.draggedPieceNo + "(" + draggedPiece.touchId + ") " + draggedPieces.length + " Pieces"
-                if (debugmessage != msg1 + msg2) {
-                    debugmessage = msg1 + msg2 // global var to avoid print multiple time same information
-                    message.innerHTML += "<br/>DRAG " + msg1 + ",     P" + msg2;
-                }
+                // let msg2 = draggedPiece.draggedPieceNo + "(" + draggedPiece.touchId + ") " + draggedPieces.length + " Pieces"
+                // if (debugmessage != msg1 + msg2) {
+                //     debugmessage = msg1 + msg2 // global var to avoid print multiple time same information
+                //     message.innerHTML += "<br/>DRAG " + msg1 + ",     P" + msg2;
+                // }
 
                 let deltaLeft = evt.clientX - draggedPiece.offset.x - emplacement.pieceNoNumLeft(draggedPiece.draggedPieceNo)
                 let deltaTop = evt.clientY - draggedPiece.offset.y - emplacement.pieceNoNumTop(draggedPiece.draggedPieceNo)
 
-                let msg = "" + deltaLeft + "," + deltaTop + " "
+                // let msg = "" + deltaLeft + "," + deltaTop + " "
                 if (deltaLeft > 10) {
-                    msg += ", x>10:" + deltaLeft
                     deltaLeft += draggedPiece.offset.x > pWidth2 ? 5 : -5;
-                    msg += "->" + deltaLeft
+                    // msg += ", x>10 ->" + deltaLeft
                 } else {
                     if (deltaLeft < -10) {
-                        msg += ", x<-10:" + deltaLeft
                         deltaLeft += draggedPiece.offset.x > pWidth2 ? -5 : 5;
-                        msg += "->" + deltaLeft
+                        // msg += ", x<-10:->" + deltaLeft
                     }
                 }
                 if (deltaTop > 10) {
-                    msg += ", x>10:" + deltaTop
                     deltaTop += (draggedPiece.offset.x > pHeight2 ? 5 : -5)
-                    msg += "->" + deltaTop
+                        // msg += ", x>10->" + deltaTop
                 } else {
                     if (deltaTop < -10) {
-                        msg += ", x<-10:" + deltaTop
                         deltaTop += draggedPiece.offset.x > pHeight2 ? -5 : 5;
-                        msg += "->" + deltaTop
+                        // msg += ", x<-10->" + deltaTop
                     }
                 }
-                // message.innerHTML = "drag: e.client:" + evt.clientX + "," + evt.clientY + "  offset:" + offset.x + "," + offset.y +
-                //     ", delta:" + deltaLeft + "," + deltaTop
-                console.log("delta:" + msg + ", clientXY:" + evt.clientX + "," + evt.clientY + ", pageXY:" + evt.pageX + "," + evt.pageY + "  offset:" + draggedPiece.offset.x + "," + draggedPiece.offset.y)
+                // console.log("delta:" + msg + ", clientXY:" + evt.clientX + "," + evt.clientY + ", pageXY:" + evt.pageX + "," + evt.pageY + "  offset:" + draggedPiece.offset.x + "," + draggedPiece.offset.y)
 
                 emplacement.deplacerAgregat(draggedPiece.dragAgregatNo, deltaLeft, deltaTop)
             }
@@ -677,16 +623,13 @@ function draggable(newSvg) {
         evtp.preventDefault();
         let contacts = evtp.type.includes('mouse') ? [evtp] : evtp.changedTouches ? evtp.changedTouches : [];
         for (let evt of contacts) {
-            let touchId = (evt.identifier !== undefined ? evt.identifier : 999)
-
-            for (let i = 0; i < draggedPieces.length; i++) {
+            let touchId = touchTdentifier(evt)
+            for (let i = draggedPieces.length - 1; i >= 0; i--) {
                 if (draggedPieces[i].touchId == touchId) {
-                    if (emplacement.dragEnd(draggedPieces[i])) {
+                    if (emplacement.acollerVoisins(draggedPieces[i])) {
                         success()
                     }
-                    // draggedPiece = null;
-                    draggedPieces.splice(i, 1); // supprimer 1 element à la position i
-                    i--;
+                    draggedPieces.splice(i, 1); // supprimer draggedPiece
                 }
             }
         }
