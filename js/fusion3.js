@@ -559,10 +559,22 @@ function draggable(newSvg) {
 
             start p2 , 1 change id=1,    2 touch id=0,1
         */
-        let touches = evtp.type.includes('mouse') ? [evtp] : evtp.changedTouches ? evtp.changedTouches : [];
-        // let touches = evtp.type.includes('mouse') ? [evtp] : evtp.touches ? evtp.touches : [];
+        let contacts = evtp.changedTouches ? evtp.changedTouches : [evtp];
+        // let contacts = evtp.type.includes('mouse') ? [evtp] : evtp.touches ? evtp.touches : [];
 
-        for (let evt of touches) {
+        debugmessage = ""
+        let msg = ""
+        if (evtp.changedTouches) {
+            msg = evtp.changedTouches.length + " changedTouches id("
+            for (let c of evtp.changedTouches) { msg += " " + c.identifier }
+            msg += "),    " + evtp.touches.length + " touches id("
+            for (let t of evtp.touches) { msg += " " + t.identifier }
+            msg += "),    " + draggedPieces.length + " draggedPieces"
+        }
+        message.innerHTML += "<br/>START " + msg;
+
+        for (let evt of contacts) {
+            let touchId = (evt.identifier !== undefined ? evt.identifier : 999)
             let x = evt.clientX
             let y = evt.clientY
 
@@ -582,20 +594,11 @@ function draggable(newSvg) {
                 offset: offset,
                 dragAgregatNo: null,
                 dragAgregated: null,
-                touchId: (evt.identifier ? evt.identifier : 999)
+                touchId: touchId
             }
             draggedPieces.push(draggedPiece)
 
-            let msg = draggedPieceNo + "-" + draggedPiece.touchId + "/" + draggedPieces.length
-            if (evtp.touches) {
-                msg += ", " + evtp.changedTouches.length + " changedTouches id:"
-                for (let c of evtp.changedTouches) { msg += " " + c.identifier }
-                msg += ", " + evtp.touches.length + " touches id:"
-                for (let t of evtp.touches) { msg += " " + t.identifier }
-            }
-
-            message.innerHTML += "<br/>START P" + msg;
-            debugmessage = ""
+            message.innerHTML += ",    P" + draggedPieceNo + "(" + draggedPiece.touchId + ")"
 
             emplacement.dragAgregatZindex(draggedPiece)
                 // console.log("startDrag pret  position :" + draggedPiece.getAttribute("position"))
@@ -606,75 +609,78 @@ function draggable(newSvg) {
         evtp.preventDefault();
         // if (evt.changedTouches) evt = evt.changedTouches[0];
         // if (evt.touches) evt = evt.touches[0];
-        let touches = evtp.type.includes('mouse') ? [evtp] : evtp.touches ? evtp.touches : [];
-        // let touches = evtp.type.includes('mouse') ? [evtp] : evtp.changedTouches ? evtp.changedTouches : [];
-        for (let evt of touches) {
+        let contacts = evtp.touches ? evtp.touches : [evtp];
+
+        // let contacts = evtp.type.includes('mouse') ? [evtp] : evtp.changedTouches ? evtp.changedTouches : [];
+
+        let msg1 = ""
+        if (evtp.touches) {
+            msg1 = evtp.changedTouches.length + " changedTouches id("
+            for (let c of evtp.changedTouches) { msg1 += " " + c.identifier }
+            msg1 += "),    " + evtp.touches.length + " touches id("
+            for (let t of evtp.touches) { msg1 += " " + t.identifier }
+            msg1 += "),    " + draggedPieces.length + " draggedPieces"
+        }
+        // message.innerHTML += "<br/>DRAG " + msg1;        
+
+        for (let evt of contacts) {
 
             // message.innerHTML = "drag: touches" + evt.changedTouches.length + " evt.client:" + evt.clientX + "," + evt.clientY + "  offset:" + offset.x + "," + offset.y
             // message.innerHTML = "drag: e.client:" + evt.clientX + "," + evt.clientY + "  offset:" + offset.x + "," + offset.y
-            let touchId = (evt.identifier ? evt.identifier : 999)
+            let touchId = (evt.identifier !== undefined ? evt.identifier : 999)
+
+
             let draggedPiece = draggedPieces.find(p => { return p.touchId == touchId })
             if (draggedPiece) {
-                let offset = draggedPiece.offset,
-                    draggedPieceNo = draggedPiece.draggedPieceNo,
-                    dragAgregatNo = draggedPiece.dragAgregatNo
-
-                let msg = draggedPieceNo + "-" + draggedPiece.touchId + "/" + draggedPieces.length
-                if (evtp.touches) {
-                    msg += ", " + evtp.changedTouches.length + " changedTouches id:"
-                    for (let c of evtp.changedTouches) { msg += " " + c.identifier }
-                    msg += ", " + evtp.touches.length + " touches id:"
-                    for (let t of evtp.touches) { msg += " " + t.identifier }
+                let msg2 = draggedPiece.draggedPieceNo + "(" + draggedPiece.touchId + ") " + draggedPieces.length + " Pieces"
+                if (debugmessage != msg1 + msg2) {
+                    debugmessage = msg1 + msg2 // global var to avoid print multiple time same information
+                    message.innerHTML += "<br/>DRAG " + msg1 + ",     P" + msg2;
                 }
 
-                if (debugmessage != msg) {
-                    message.innerHTML += "<br/>DRAG P" + msg;
-                    debugmessage = msg // global var to avoid print multiple time same information
-                }
+                let deltaLeft = evt.clientX - draggedPiece.offset.x - emplacement.pieceNoNumLeft(draggedPiece.draggedPieceNo)
+                let deltaTop = evt.clientY - draggedPiece.offset.y - emplacement.pieceNoNumTop(draggedPiece.draggedPieceNo)
 
-                // emplacement.drag(evt.clientX - offset.x, evt.clientY - offset.y)
-                let deltaLeft = evt.clientX - offset.x - emplacement.pieceNoNumLeft(draggedPieceNo)
-                let deltaTop = evt.clientY - offset.y - emplacement.pieceNoNumTop(draggedPieceNo)
-
-                msg = "" + deltaLeft + "," + deltaTop + " "
+                let msg = "" + deltaLeft + "," + deltaTop + " "
                 if (deltaLeft > 10) {
                     msg += ", x>10:" + deltaLeft
-                    deltaLeft += offset.x > pWidth2 ? 5 : -5;
+                    deltaLeft += draggedPiece.offset.x > pWidth2 ? 5 : -5;
                     msg += "->" + deltaLeft
                 } else {
                     if (deltaLeft < -10) {
                         msg += ", x<-10:" + deltaLeft
-                        deltaLeft += offset.x > pWidth2 ? -5 : 5;
+                        deltaLeft += draggedPiece.offset.x > pWidth2 ? -5 : 5;
                         msg += "->" + deltaLeft
                     }
                 }
                 if (deltaTop > 10) {
                     msg += ", x>10:" + deltaTop
-                    deltaTop += (offset.x > pHeight2 ? 5 : -5)
+                    deltaTop += (draggedPiece.offset.x > pHeight2 ? 5 : -5)
                     msg += "->" + deltaTop
                 } else {
                     if (deltaTop < -10) {
                         msg += ", x<-10:" + deltaTop
-                        deltaTop += offset.x > pHeight2 ? -5 : 5;
+                        deltaTop += draggedPiece.offset.x > pHeight2 ? -5 : 5;
                         msg += "->" + deltaTop
                     }
                 }
                 // message.innerHTML = "drag: e.client:" + evt.clientX + "," + evt.clientY + "  offset:" + offset.x + "," + offset.y +
                 //     ", delta:" + deltaLeft + "," + deltaTop
-                console.log("delta:" + msg + ", clientXY:" + evt.clientX + "," + evt.clientY + ", pageXY:" + evt.pageX + "," + evt.pageY + "  offset:" + offset.x + "," + offset.y)
+                console.log("delta:" + msg + ", clientXY:" + evt.clientX + "," + evt.clientY + ", pageXY:" + evt.pageX + "," + evt.pageY + "  offset:" + draggedPiece.offset.x + "," + draggedPiece.offset.y)
 
-                emplacement.deplacerAgregat(dragAgregatNo, deltaLeft, deltaTop)
+                emplacement.deplacerAgregat(draggedPiece.dragAgregatNo, deltaLeft, deltaTop)
             }
         }
     }
 
     function endDragDrop(evtp) {
         evtp.preventDefault();
-        let touches = evtp.type.includes('mouse') ? [evtp] : evtp.changedTouches ? evtp.changedTouches : [];
-        for (let evt of touches) {
+        let contacts = evtp.type.includes('mouse') ? [evtp] : evtp.changedTouches ? evtp.changedTouches : [];
+        for (let evt of contacts) {
+            let touchId = (evt.identifier !== undefined ? evt.identifier : 999)
 
             for (let i = 0; i < draggedPieces.length; i++) {
-                if (draggedPieces[i].touchId == (evt.identifier ? evt.identifier : 999)) {
+                if (draggedPieces[i].touchId == touchId) {
                     if (emplacement.dragEnd(draggedPieces[i])) {
                         success()
                     }
