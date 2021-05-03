@@ -555,9 +555,9 @@ function draggable(newSvg) {
         // if (evt.touches) evt = evt.touches[0];
         /*
         ano smartphone 02 mai :
-            start p1 1 touch 1 change,     drag p1
+            start p1 ,  1 change id=0,     1 touch id=0
 
-            start p2 2 touch 1 change,     drag p1 
+            start p2 , 1 change id=1,    2 touch id=0,1
         */
         let touches = evtp.type.includes('mouse') ? [evtp] : evtp.changedTouches ? evtp.changedTouches : [];
         // let touches = evtp.type.includes('mouse') ? [evtp] : evtp.touches ? evtp.touches : [];
@@ -582,7 +582,7 @@ function draggable(newSvg) {
                 offset: offset,
                 dragAgregatNo: null,
                 dragAgregated: null,
-                touchId: (evt.identifier ? evt.identifier : draggedPieces.length + 1)
+                touchId: (evt.identifier ? evt.identifier : 999)
             }
             draggedPieces.push(draggedPiece)
 
@@ -612,7 +612,7 @@ function draggable(newSvg) {
 
             // message.innerHTML = "drag: touches" + evt.changedTouches.length + " evt.client:" + evt.clientX + "," + evt.clientY + "  offset:" + offset.x + "," + offset.y
             // message.innerHTML = "drag: e.client:" + evt.clientX + "," + evt.clientY + "  offset:" + offset.x + "," + offset.y
-            let touchId = (evt.identifier ? evt.identifier : 1)
+            let touchId = (evt.identifier ? evt.identifier : 999)
             let draggedPiece = draggedPieces.find(p => { return p.touchId == touchId })
             if (draggedPiece) {
                 let offset = draggedPiece.offset,
@@ -674,7 +674,7 @@ function draggable(newSvg) {
         for (let evt of touches) {
 
             for (let i = 0; i < draggedPieces.length; i++) {
-                if (draggedPieces[i].touchId == (evt.identifier ? evt.identifier : 1)) {
+                if (draggedPieces[i].touchId == (evt.identifier ? evt.identifier : 999)) {
                     if (emplacement.dragEnd(draggedPieces[i])) {
                         success()
                     }
